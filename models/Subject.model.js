@@ -1,4 +1,7 @@
 const mongoose = require('mongoose');
+const Chapter = require('./Chapter.model');
+const Competence = require('./Competence.model');
+const Evaluation = require('./Evaluation.model');
 
 // Define the Subject schema
 const subjectSchema = new mongoose.Schema({
@@ -30,6 +33,18 @@ const subjectSchema = new mongoose.Schema({
     type: String, // Level of the subject (e.g., "beginner", "intermediate", "advanced")
     required: true,
     trim: true,
+  },
+  chapters: {
+    type: [Chapter.schema], // Embedded array of Chapter subdocuments
+    required: false,
+  },
+  competences: {
+    type: [Competence.schema], // Embedded array of Competence subdocuments
+    required: false,
+  },
+  evaluation: {
+    type: Evaluation.schema, // Single embedded document for Evaluation
+    required: false,
   },
 });
 

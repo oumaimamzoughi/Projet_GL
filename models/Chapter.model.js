@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Section = require('./Section.model');
 
 // Define the Chapter schema
 const chapterSchema = new mongoose.Schema({
@@ -17,6 +18,7 @@ const chapterSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
+  sections: [Section.schema]
 });
 
 // Create the Chapter model

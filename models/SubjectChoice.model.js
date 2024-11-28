@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const PFA = require('./PFA.mode');
 
 // Define the SubjectChoice schema
 const subjectChoiceSchema = new mongoose.Schema({
@@ -10,6 +11,20 @@ const subjectChoiceSchema = new mongoose.Schema({
   priority: {
     type: Number, // Priority level of the subject
     required: true,
+  },
+  studentId:{
+    type:string,
+    required:true,
+    unique:true,
+},
+PFA: {
+    type: [PFA.schema], // Embedding the PFA subdocument
+    validate: {
+      validator: function (arr) {
+        return arr.length === 3; // Ensure exactly 3 PFAs are provided
+      },
+      message: 'A subject choice must have exactly 3 PFA entries',
+    },
   },
 });
 

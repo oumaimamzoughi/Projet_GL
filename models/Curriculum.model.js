@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Subject = require('./Subject.model');
 
 // Define the Curriculum schema
 const curriculumSchema = new mongoose.Schema({
@@ -20,6 +21,7 @@ const curriculumSchema = new mongoose.Schema({
     type: String, 
     required: true,
   },
+  subjects: [Subject.schema],
 });
 
 // Create the Curriculum model
