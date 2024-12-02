@@ -1,15 +1,30 @@
+
 const express = require('express');
-const app = express();
+const mongoose = require('mongoose');
 const userRoutes = require('./routes/UserRouter');
 
-// Middleware to parse JSON request bodies
-app.use(express.json());
+const Authrouter = require('./routes/auth');
+const cors = require('cors');
 
-// Use the user routes
-app.use('/api', userRoutes);
+const app = express();
 
-// Start the server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+mongoose
+  .connect("mongodb://localhost:27017/Node_project")
+  .then(function () {
+    console.log("Connnection MongoDB réussi");
+  })
+  .catch(function (e) {
+    console.log("Connnection échoué");
+  });
+
+  app.listen(5000, () => {
+    console.log("Serveur démarré sur le port 5000");
 });
+
+  app.use(express.json());
+app.use(cors()); //ici tous le monde passe , il faut ajouter une liste de middleware
+app.use(express.json());
+app.use('/api', userRoutes);
+app.use("/api/auth", Authrouter);
+
+
