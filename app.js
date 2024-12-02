@@ -2,7 +2,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const userRoutes = require('./routes/UserRouter');
-
+const periodRoutes = require('./routes/PeriodRouter');
 const Authrouter = require('./routes/auth');
 const cors = require('cors');
 
@@ -26,5 +26,5 @@ app.use(cors()); //ici tous le monde passe , il faut ajouter une liste de middle
 app.use(express.json());
 app.use('/api', userRoutes);
 app.use("/api/auth", Authrouter);
-
+app.use('/api/Period', periodRoutes);
 
