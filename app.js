@@ -1,15 +1,58 @@
 const express = require('express');
+const http = require('http');
+const mongoose = require('mongoose');
+const socketIo = require('socket.io');
+require('dotenv').config();
+
+// Import your Express app
 const app = express();
 const userRoutes = require('./routes/UserRouter');
 
 // Middleware to parse JSON request bodies
 app.use(express.json());
 
+// MongoDB Atlas Configuration
+mongoose
+  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('Connected to MongoDB Atlas'))
+  .catch((error) => console.error('Error connecting to MongoDB:', error));
+
+// Create an HTTP server
+const server = http.createServer(app);
+
+// Initialize Socket.IO
+const io = socketIo(server);
+
+const PORT = process.env.PORT || 3000;
+const connectedUsers = new Map(); // Maps userId to socketId
+
+io.on('connection', (socket) => {
+  console.log('A user connected:', socket.id);
+
+  // Register the user to track their connection
+  socket.on('registerUser', (userId) => {
+    connectedUsers.set(userId, socket.id);
+    console.log(`User ${userId} connected with socket ID: ${socket.id}`);
+  });
+
+  // Handle user disconnect
+  socket.on('disconnect', () => {
+    for (const [userId, socketId] of connectedUsers.entries()) {
+      if (socketId === socket.id) {
+        connectedUsers.delete(userId);
+        console.log(`User ${userId} disconnected`);
+        break;
+      }
+    }
+  });
+});
+
 // Use the user routes
 app.use('/api', userRoutes);
 
 // Start the server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+
+module.exports = { server, io, connectedUsers };

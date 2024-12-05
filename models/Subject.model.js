@@ -15,6 +15,10 @@ const subjectSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
+  masked:{
+    type: Boolean,
+    default:true,
+  },
   description: {
     type: String, // Description of the subject
     required: false,
@@ -39,7 +43,7 @@ const subjectSchema = new mongoose.Schema({
     required: false,
   },
   competences: {
-    type: [Competence.schema], // Embedded array of Competence subdocuments
+    type: mongoose.Schema.Types.ObjectId, ref: 'Competence' , // Embedded array of Competence subdocuments
     required: false,
   },
   evaluation: {
