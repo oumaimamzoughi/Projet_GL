@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const userRoutes = require('./routes/UserRouter');
 const periodRoutes = require('./routes/PeriodRouter');
+const PFARoutes = require('./routes/PFA');
 const Authrouter = require('./routes/auth');
 const cors = require('cors');
 
@@ -27,4 +28,5 @@ app.use(express.json());
 app.use('/api', userRoutes);
 app.use("/api/auth", Authrouter);
 app.use('/api/Period', periodRoutes);
+app.use('/api/PFA', PFARoutes);
 

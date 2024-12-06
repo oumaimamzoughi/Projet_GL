@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 
 // Define the Period schema
 const periodSchema = new mongoose.Schema({
-  
   start_date: {
     type: Date, // Start date of the period
     required: true,

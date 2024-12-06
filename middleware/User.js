@@ -6,7 +6,7 @@ const JWT_SECRET = "ISAMM_SECRET";
 exports.loggedMiddleware = async (req, res, next) => {
   try {
     const token = req.headers.authorization.split(" ")[1];
-    console.log("token: ", token);
+   
     const decodedToken = jwt.verify(token, JWT_SECRET);
     const userId = decodedToken.userId;
     try {
@@ -36,6 +36,19 @@ exports.isAdmin = (req, res, next) => {
       res.status(403).json({ error: "no access to this route" });
     }
   } catch (e) {
+    res.status(401).json({ error: error.message });
+  }
+};
+
+exports.isTeacher = (req, res, next) => {
+  try {
+    // Accéder à req.auth au lieu de req.user
+    if (req.auth && req.auth.role === "teacher") {
+      next();
+    } else {
+      res.status(403).json({ message: "No access to this route." });
+    }
+  } catch (error) {
     res.status(401).json({ error: error.message });
   }
 };
