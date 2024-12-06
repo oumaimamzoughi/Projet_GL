@@ -2,11 +2,6 @@ const mongoose = require('mongoose');
 
 // Define the Period schema
 const periodSchema = new mongoose.Schema({
-  period_id: {
-    type: Number, // Integer for the period ID
-    required: true,
-    unique: true,
-  },
   start_date: {
     type: Date, // Start date of the period
     required: true,
@@ -14,6 +9,11 @@ const periodSchema = new mongoose.Schema({
   end_date: {
     type: Date, // End date of the period
     required: true,
+  },
+  type: {
+    type: String, // Type of the period
+    enum: ['teacher_submission', 'internship_submission', 'pfa_choice_submission'], // Allowed values
+    required: true, // Mandatory field
   },
 });
 

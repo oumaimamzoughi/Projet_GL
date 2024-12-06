@@ -1,3 +1,4 @@
+
 const express = require('express');
 const http = require('http');
 const mongoose = require('mongoose');
@@ -7,8 +8,19 @@ require('dotenv').config();
 // Import your Express app
 const app = express();
 const userRoutes = require('./routes/UserRouter');
+const periodRoutes = require('./routes/PeriodRouter');
+const PFARoutes = require('./routes/PFA');
+const Authrouter = require('./routes/auth');
+const cors = require('cors');
 
-// Middleware to parse JSON request bodies
+
+
+  app.listen(5000, () => {
+    console.log("Serveur démarré sur le port 5000");
+});
+
+  app.use(express.json());
+app.use(cors()); //ici tous le monde passe , il faut ajouter une liste de middleware
 app.use(express.json());
 
 // MongoDB Atlas Configuration
@@ -49,6 +61,9 @@ io.on('connection', (socket) => {
 
 // Use the user routes
 app.use('/api', userRoutes);
+app.use("/api/auth", Authrouter);
+app.use('/api/Period', periodRoutes);
+app.use('/api/PFA', PFARoutes);
 
 // Start the server
 server.listen(PORT, () => {
