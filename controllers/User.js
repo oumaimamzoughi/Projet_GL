@@ -3,18 +3,8 @@ const User = require('../models/User.model');
 // Create a new user
 exports.createUser = async (req, res) => {
   try {
-    const { role, ...userData } = req.body;
-
-    // Ensure a valid role is provided if using discriminators
-    if (!['student', 'teacher', 'admin'].includes(role)) {
-      return res.status(400).json({ error: 'Invalid role specified' });
-    }
-
-    // Use the correct discriminator model based on the role
-    const userModel = User.discriminators[role] || User;
-    const newUser = new userModel(userData);
+    const newUser = new User(req.body);
     await newUser.save();
-
     res.status(201).json(newUser);
   } catch (error) {
     res.status(400).json({ error: error.message });

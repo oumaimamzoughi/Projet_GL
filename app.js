@@ -7,13 +7,14 @@ require('dotenv').config();
 // Import your Express app
 const app = express();
 const userRoutes = require('./routes/UserRouter');
+const competencesRoutes = require('./routes/CompetencesRoutes')
 
 // Middleware to parse JSON request bodies
 app.use(express.json());
 
 // MongoDB Atlas Configuration
 mongoose
-  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(process.env.MONGO_URI)
   .then(() => console.log('Connected to MongoDB Atlas'))
   .catch((error) => console.error('Error connecting to MongoDB:', error));
 
@@ -48,7 +49,8 @@ io.on('connection', (socket) => {
 });
 
 // Use the user routes
-app.use('/api', userRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/competences', competencesRoutes);
 
 // Start the server
 server.listen(PORT, () => {
