@@ -54,8 +54,17 @@ exports.deleteCompetence = async (req, res) => {
     if (!competence) {
       return res.status(404).json({ message: 'Competence not found' });
     }
+
+    // Remove competence from all subjects
+    const Subject = require('../models/Subject.model'); // Import Subject model
+    await Subject.updateMany(
+      { competences: competence._id },
+      { $pull: { competences: competence._id } }
+    );
+
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+

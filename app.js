@@ -1,22 +1,19 @@
 
 const express = require('express');
+const http = require('http');
 const mongoose = require('mongoose');
+const socketIo = require('socket.io');
+require('dotenv').config();
+
+// Import your Express app
+const app = express();
 const userRoutes = require('./routes/UserRouter');
 const periodRoutes = require('./routes/PeriodRouter');
 const PFARoutes = require('./routes/PFA');
 const Authrouter = require('./routes/auth');
 const cors = require('cors');
 
-const app = express();
 
-mongoose
-  .connect("mongodb://localhost:27017/Node_project")
-  .then(function () {
-    console.log("Connnection MongoDB réussi");
-  })
-  .catch(function (e) {
-    console.log("Connnection échoué");
-  });
 
   app.listen(5000, () => {
     console.log("Serveur démarré sur le port 5000");
@@ -25,8 +22,52 @@ mongoose
   app.use(express.json());
 app.use(cors()); //ici tous le monde passe , il faut ajouter une liste de middleware
 app.use(express.json());
+
+// MongoDB Atlas Configuration
+mongoose
+  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('Connected to MongoDB Atlas'))
+  .catch((error) => console.error('Error connecting to MongoDB:', error));
+
+// Create an HTTP server
+const server = http.createServer(app);
+
+// Initialize Socket.IO
+const io = socketIo(server);
+
+const PORT = process.env.PORT || 3000;
+const connectedUsers = new Map(); // Maps userId to socketId
+
+io.on('connection', (socket) => {
+  console.log('A user connected:', socket.id);
+
+  // Register the user to track their connection
+  socket.on('registerUser', (userId) => {
+    connectedUsers.set(userId, socket.id);
+    console.log(`User ${userId} connected with socket ID: ${socket.id}`);
+  });
+
+  // Handle user disconnect
+  socket.on('disconnect', () => {
+    for (const [userId, socketId] of connectedUsers.entries()) {
+      if (socketId === socket.id) {
+        connectedUsers.delete(userId);
+        console.log(`User ${userId} disconnected`);
+        break;
+      }
+    }
+  });
+});
+
+// Use the user routes
 app.use('/api', userRoutes);
 app.use("/api/auth", Authrouter);
 app.use('/api/Period', periodRoutes);
 app.use('/api/PFA', PFARoutes);
 
+// Start the server
+server.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+
+module.exports = { server, io, connectedUsers };
