@@ -12,4 +12,6 @@ router.get("/",middleAuth.loggedMiddleware, middleAuth.isAdmin,PFAController.get
 router.patch("/:id/reject",middleAuth.loggedMiddleware, middleAuth.isAdmin,PFAController.rejectPFA);
 router.patch("/publish/:response",middleAuth.loggedMiddleware, middleAuth.isAdmin,PFAController.publishPFA)
 router.post("/list/send",middleAuth.loggedMiddleware, middleAuth.isAdmin, PFAController.sendPFAList)
+router.get("/list",middleAuth.loggedMiddleware, middleAuth.isStudent, PFAController.getPFAsByTeacher)
+router.get("/:id",  middleAuth.loggedMiddleware, middleAuth.isStudent, PFAController.getPFAById);
 module.exports = router;

@@ -57,7 +57,9 @@ exports.getAllPFAs = async (req, res) => {
 // Get a specific PFA by ID
 exports.getPFAById = async (req, res) => {
   try {
-    const pfa = await PFA.findById(req.params.id);
+    const pfa = await PFA.findById(req.params.id)
+    .populate("teacher", "firstName lastName email") 
+    .select("title description technologies pair_work teacher status"); // Champs nécessaires
     if (!pfa) {
       return res.status(404).json({ message: "PFA not found" });
     }
@@ -217,6 +219,27 @@ exports.sendPFAList = async (req, res) => {
         console.error('Erreur lors de l\'envoi de la liste des sujets PFA :', error.message);
         res.status(500).json({ error: 'Erreur interne du serveur', details: error.message });
     }
+};
+
+//Lister les sujets pfa triés par enseignant
+exports.getPFAsByTeacher = async (req, res) => {
+  try {
+      // Récupérer les sujets avec les champs nécessaires
+      const pfas = await PFA.find()
+            .populate('teacher', 'firstName lastName email') // Récupérer les informations de l'enseignant depuis User
+            .sort({ 'teacher.lastName': 1 }); // Trier par le nom de famille de l'enseignant
+
+
+      // Vérifier si des sujets existent
+      if (!pfas.length) {
+          return res.status(404).json({ message: 'Aucun sujet PFA trouvé.' });
+      }
+
+      // Retourner les sujets triés
+      res.status(200).json(pfas);
+  } catch (error) {
+      res.status(500).json({ error: error.message });
+  }
 };
 
 
