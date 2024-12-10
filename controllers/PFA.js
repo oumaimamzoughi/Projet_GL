@@ -1,5 +1,7 @@
 const PFA = require("../models/PFA.mode");
 const Period = require("../models/Period.model");
+const { sendEmail } = require("../services/emailService");
+
 
 // Create a new PFA
 exports.createPFA = async (req, res) => {
@@ -145,13 +147,13 @@ exports.publishPFA = async (req, res) => {
   try {
       if (response === 'true') {
           // Récupérer les PFA non rejetés
-          const pfas = await PFA.find({ status: { $ne: 'rejeté' } });
+          const pfas = await PFA.find({ status: { $ne: 'rejected' } });
           if (pfas.length === 0) {
               return res.status(404).json({ message: 'Aucun PFA non rejeté trouvé.' });
           }
 
           // Publier les PFA non rejetés (changer leur statut en "publié")
-          await PFA.updateMany({ status: { $ne: 'rejeté' } }, { $set: { status: 'publié' } });
+          await PFA.updateMany({ status: { $ne: 'rejected' } }, { $set: { status: 'publié' } });
           console.log("PFA non rejetés publiés avec succès.");
 
           // Si des dates sont fournies, mettre à jour la période de choix des étudiants
@@ -172,3 +174,50 @@ exports.publishPFA = async (req, res) => {
       res.status(500).json({ error: 'Erreur interne du serveur', details: error.message });
   }
 };
+
+//emailing
+exports.sendPFAList = async (req, res) => {
+    const { isModified } = req.body; // Booléen indiquant si la liste est modifiée
+    const recipients = ['fitourions@gmail.com', 'oumaimahrnii@gmail.com']; // Liste des destinataires
+    const subject = isModified 
+        ? 'Liste des sujets PFA mise à jour' 
+        : 'Première liste des sujets PFA publiés';
+    //const baseUrl = 'https://votre-plateforme.com/PFA'; // URL de la liste
+    const message = isModified 
+        ? `La liste des sujets PFA a été modifiée. Consultez les nouveaux sujets ici : `
+        : `Voici la liste des sujets PFA publiés : `;
+
+    try {
+        // Récupérer les PFA publiés
+        const publishedPFAs = await PFA.find({ status: 'publié' });
+        if (publishedPFAs.length === 0) {
+            return res.status(404).json({ message: 'Aucun sujet PFA publié à envoyer.' });
+        }
+
+        // Envoyer un email aux destinataires
+        for (const recipient of recipients) {
+          console.log(`Envoi à : ${recipient}`);
+          await sendEmail({
+              to: recipient, // Destinataire
+              subject, // Objet
+              text: message, // Message brut
+              html: `<p>${message}</p>`, // Message HTML
+          });
+        }
+
+        // Mettre à jour les états d'envoi
+        const now = new Date();
+        await PFA.updateMany(
+            { status: 'publié' }, 
+            { $set: { isSent: true, lastSentDate: now } }
+        );
+
+        res.status(200).json({ message: 'Liste des sujets PFA envoyée avec succès.', sentAt: now });
+    } catch (error) {
+        console.error('Erreur lors de l\'envoi de la liste des sujets PFA :', error.message);
+        res.status(500).json({ error: 'Erreur interne du serveur', details: error.message });
+    }
+};
+
+
+

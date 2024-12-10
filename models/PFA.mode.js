@@ -41,6 +41,13 @@ const pfaSchema = new mongoose.Schema({
     ref:"User", // Teacher name or ID
     required: true, 
   },
+  isSent: {
+    type: Boolean,
+    default: false, // Indique si ce PFA a déjà été envoyé
+},
+lastSentDate: {
+    type: Date, // Date du dernier envoi de ce PFA
+},
 });
 
 // Create the PFA model

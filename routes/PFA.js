@@ -11,4 +11,5 @@ router.delete("/delete/:id",middleAuth.loggedMiddleware, middleAuth.isTeacher ,P
 router.get("/",middleAuth.loggedMiddleware, middleAuth.isAdmin,PFAController.getAllPFAs)
 router.patch("/:id/reject",middleAuth.loggedMiddleware, middleAuth.isAdmin,PFAController.rejectPFA);
 router.patch("/publish/:response",middleAuth.loggedMiddleware, middleAuth.isAdmin,PFAController.publishPFA)
+router.post("/list/send",middleAuth.loggedMiddleware, middleAuth.isAdmin, PFAController.sendPFAList)
 module.exports = router;
