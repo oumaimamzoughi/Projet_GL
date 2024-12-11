@@ -21,8 +21,9 @@ const pfaSchema = new mongoose.Schema({
     default: false,
   },
   partner_id: {
-    type: Number, // ID of the partner (if pair work)
+    type: mongoose.Schema.Types.ObjectId, // ID of the partner (if pair work)
     default: null, // Default is null when no partner
+    ref: 'User', // Reference to the User model (partner)
   },
   status: {
     type: String, // Status of the PFA
@@ -37,6 +38,11 @@ const pfaSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref:"User", // Teacher name or ID
     required: true, 
+  },
+  student: { 
+    type: mongoose.Schema.Types.ObjectId, // ID of the partner (if pair work)
+    default: null, // Default is null when no partner
+    ref: 'User', // Reference to the User model (partner)
   },
   
   isSent: {

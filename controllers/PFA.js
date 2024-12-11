@@ -313,3 +313,79 @@ exports.createSubjectChoice = async (req, res) => {
   }
 };
 
+//indiquer acceptation de l'enseignant
+exports.indicateTeacherApproval = async (req, res) => {
+  
+  try {
+    const studentId = req.auth.userId; // ID de l'étudiant
+    const pfaId = req.params.id; // ID du PFA dans l'URL
+    const { teacherApproval } = req.body; // Donnée envoyée dans le corps de la requête
+
+    // Recherche du PFA avec l'ID passé dans l'URL
+    const subjectChoice = await SubjectChoice.findOne({
+      student: studentId,
+      pfa: pfaId,
+    });
+
+    if (!subjectChoice) {
+      return res.status(404).json({ error: "Choix de sujet non trouvé." });
+    }
+
+    // Vérifier si le sujet a déjà l'approbation de l'enseignant
+    if (subjectChoice.teacherApproval) {
+      return res.status(400).json({ error: "Ce choix a déjà été approuvé par l'enseignant." });
+    }
+
+    // Mise à jour de l'acceptation par l'enseignant
+    subjectChoice.teacherApproval = teacherApproval;
+
+    await subjectChoice.save();
+
+    return res.status(200).json({
+      message: "L'approbation de l'enseignant a été mise à jour.",
+      subjectChoice,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+// Associer un étudiant (ou binôme) à un projet
+exports.assignStudentToPFA = async (req, res) => {
+  try {
+    const { studentId, partnerId } = req.body; // Récupération de l'ID de l'étudiant et de son binôme depuis le corps de la requête
+
+    const pfa = await PFA.findById(req.params.id); // Recherche du PFA par son ID
+
+    if (!pfa) {
+      return res.status(404).json({ error: "PFA non trouvé." });
+    }
+
+    // Vérifier si le PFA nécessite un binôme
+    if (pfa.pair_work) {
+      if (!partnerId) {
+        return res.status(400).json({ error: "Un binôme est requis pour ce sujet." });
+      }
+
+      // Vérifier si le partenaire existe
+      const partner = await User.findById(partnerId);  // Assurez-vous que vous avez le modèle User importé
+      if (!partner) {
+        return res.status(404).json({ error: "Binôme non trouvé." });
+      }
+
+      // Affecter le sujet au PFA et aux deux étudiants
+      pfa.student = studentId;
+      pfa.partner_id = partnerId;  // Attribuer le binôme au PFA
+    } else {
+      // Si le PFA ne nécessite pas de binôme, affecter uniquement l'étudiant
+      pfa.student = studentId;
+      pfa.partner_id = null;  // Pas de partenaire si le PFA ne nécessite pas de binôme
+    }
+
+    await pfa.save(); // Sauvegarder les changements dans le PFA
+
+    res.status(200).json({ message: "Etudiant affecté au PFA.", pfa });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

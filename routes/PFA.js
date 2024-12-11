@@ -15,5 +15,8 @@ router.post("/list/send",middleAuth.loggedMiddleware, middleAuth.isAdmin, PFACon
 router.get("/list",middleAuth.loggedMiddleware, middleAuth.isStudent, PFAController.getPFAsByTeacher)
 router.get("/:id",  middleAuth.loggedMiddleware, middleAuth.isStudent, PFAController.getPFAById);
 router.patch("/:id/choice",middleAuth.loggedMiddleware, middleAuth.isStudent,PFAController.createSubjectChoice)
+router.patch("/:id/:acceptance",middleAuth.loggedMiddleware, middleAuth.isStudent,PFAController.indicateTeacherApproval)
+router.patch("/:id",middleAuth.loggedMiddleware, middleAuth.isTeacher,PFAController.assignStudentToPFA)
+
 
 module.exports = router;
