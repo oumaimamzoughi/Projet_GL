@@ -1,3 +1,4 @@
+
 const express = require('express');
 const http = require('http');
 const mongoose = require('mongoose');
@@ -8,9 +9,15 @@ require('dotenv').config();
 const app = express();
 const userRoutes = require('./routes/UserRouter');
 const competencesRoutes = require('./routes/CompetencesRoutes')
+const periodRoutes = require('./routes/PeriodRouter');
+const PFARoutes = require('./routes/PFA');
+const Authrouter = require('./routes/auth');
+const cors = require('cors');
+
 
 // Middleware to parse JSON request bodies
 app.use(express.json());
+app.use(cors());
 
 // MongoDB Atlas Configuration
 mongoose
@@ -51,6 +58,9 @@ io.on('connection', (socket) => {
 // Use the user routes
 app.use('/api/users', userRoutes);
 app.use('/api/competences', competencesRoutes);
+app.use("/api/auth", Authrouter);
+app.use('/api/Period', periodRoutes);
+app.use('/api/PFA', PFARoutes);
 
 // Start the server
 server.listen(PORT, () => {
