@@ -14,4 +14,6 @@ router.patch("/publish/:response",middleAuth.loggedMiddleware, middleAuth.isAdmi
 router.post("/list/send",middleAuth.loggedMiddleware, middleAuth.isAdmin, PFAController.sendPFAList)
 router.get("/list",middleAuth.loggedMiddleware, middleAuth.isStudent, PFAController.getPFAsByTeacher)
 router.get("/:id",  middleAuth.loggedMiddleware, middleAuth.isStudent, PFAController.getPFAById);
+router.patch("/:id/choice",middleAuth.loggedMiddleware, middleAuth.isStudent,PFAController.createSubjectChoice)
+
 module.exports = router;

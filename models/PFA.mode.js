@@ -30,17 +30,15 @@ const pfaSchema = new mongoose.Schema({
   },
   state: {
     type: String, // Current state of the PFA
-    default: 'null', // Default state
+    default: 'non affecté', // Default state
   },
-  cin_student: {
-    type: Number, // Student name or ID
-    default: null, 
-  },
+  
   teacher: {
     type: mongoose.Schema.Types.ObjectId,
     ref:"User", // Teacher name or ID
     required: true, 
   },
+  
   isSent: {
     type: Boolean,
     default: false, // Indique si ce PFA a déjà été envoyé

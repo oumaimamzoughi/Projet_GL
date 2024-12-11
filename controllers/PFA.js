@@ -1,5 +1,7 @@
 const PFA = require("../models/PFA.mode");
 const Period = require("../models/Period.model");
+const SubjectChoice = require("../models/SubjectChoice.model")
+const User = require("../models/User.model")
 const { sendEmail } = require("../services/emailService");
 
 
@@ -242,5 +244,72 @@ exports.getPFAsByTeacher = async (req, res) => {
   }
 };
 
+//choisir pfa
+exports.createSubjectChoice = async (req, res) => {
+  try {
+    const studentId = req.auth.userId;  // Assurez-vous que l'ID de l'étudiant est dans req.auth
 
+    const { priority, partner, teacherApproval } = req.body;
+    // Vérifier le nombre total de choix
+    const totalChoices = await SubjectChoice.countDocuments({ student: studentId });
+    if (totalChoices >= 3) {
+      return res.status(400).json({ error: "Vous avez déjà sélectionné 3 sujets." });
+    }
+
+    // Vérifier que la priorité est valide
+    if (![1, 2, 3].includes(priority)) {
+      return res.status(400).json({ error: "La priorité doit être 1, 2 ou 3." });
+    }
+    // Vérifier qu'il n'y a pas de sujet avec la même priorité
+    const existingChoice = await SubjectChoice.findOne({ student: studentId, priority });
+    if (existingChoice) {
+      return res.status(400).json({ error: "Il existe déjà un sujet choisi avec cette priorité." });
+    }
+    // Vérifier que le sujet PFA existe et n'est pas déjà affecté
+    const pfa = await PFA.findById(req.params.id);
+    if (pfa.state === 'affecté') {
+      return res.status(400).json({ error: "Le sujet a déjà été affecté définitivement." });
+    }
+     // Vérifier que le binôme est valide (si applicable)
+     if (partner) {
+      const partnerExists = await User.findById(partner);
+      if (!partnerExists || partnerExists.role !== 'student') {
+        return res.status(400).json({ error: "Le binôme indiqué n'est pas valide." });
+      }
+
+      const partnerExistingChoice = await SubjectChoice.findOne({ student: partner, priority });
+      if (partnerExistingChoice) {
+        return res.status(400).json({ error: "Le binôme a déjà choisi un sujet avec cette priorité." });
+      }
+    }
+    // Créer le choix principal
+    const newChoice = new SubjectChoice({
+      subject_name: pfa.title,
+      priority,
+      student: studentId,
+      pfa: pfa._id,
+      teacherApproval,
+      partner,
+    });
+
+    await newChoice.save();
+
+    if (partner) {
+      const partnerChoice = new SubjectChoice({
+        subject_name: pfa.title,
+        priority,
+        student: partner,
+        pfa: pfa._id,
+        teacherApproval,
+        partner: studentId,
+      });
+
+      await partnerChoice.save();
+    }
+
+    res.status(201).json(newChoice);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 

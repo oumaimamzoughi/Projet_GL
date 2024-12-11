@@ -12,20 +12,28 @@ const subjectChoiceSchema = new mongoose.Schema({
     type: Number, // Priority level of the subject
     required: true,
   },
-  studentId:{
-    type:string,
-    required:true,
-    unique:true,
-},
-PFA: {
-    type: [PFA.schema], // Embedding the PFA subdocument
-    validate: {
-      validator: function (arr) {
-        return arr.length === 3; // Ensure exactly 3 PFAs are provided
-      },
-      message: 'A subject choice must have exactly 3 PFA entries',
-    },
+  student: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User', // Référence à l'étudiant
+    required: true, 
   },
+  pfa: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'PFA', // Référence au PFA
+    required: true, 
+  },
+  teacherApproval: { 
+    type: Boolean, 
+    required: true,
+    default: false,
+  },
+  partner: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User', // Référence au binôme (si applicable)
+    default: null, 
+  }
+}, {
+  timestamps: true,
 });
 
 // Create the SubjectChoice model
