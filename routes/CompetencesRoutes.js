@@ -6,7 +6,7 @@ const {
     getCompetenceById,
     updateCompetence,
     deleteCompetence,
-} = require("../controllers/Competense")
+} = require("../controllers/Competence")
 // Create a new competence
 router.post('/', createCompetence);
 
