@@ -1,7 +1,8 @@
-
 const express = require('express');
+const http = require('http');
 const mongoose = require('mongoose');
-
+const socketIo = require('socket.io');
+require('dotenv').config();
 
 // Import your Express app
 const app = express();
@@ -61,4 +62,8 @@ app.use('/api/Period', periodRoutes);
 app.use('/api/PFA', PFARoutes);
 
 
+server.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
 
+module.exports = { server, io, connectedUsers };
