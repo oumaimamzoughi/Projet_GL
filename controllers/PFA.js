@@ -115,3 +115,62 @@ exports.rejectPFA = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+
+// Fonction pour sauvegarder ou mettre à jour la période de choix des PFA
+const saveOrUpdatePfaChoicePeriod = async (startDate, endDate) => {
+  try {
+
+      // Vérification si la date de début est supérieure à la date de fin
+      if (new Date(startDate) > new Date(endDate)) {
+      throw new Error("La date de début ne peut pas être postérieure à la date de fin.");
+      }
+      const updatedPeriod = await Period.findOneAndUpdate(
+          { type: 'pfa_choice_submission' }, // Filtre basé sur le type de la période
+          { start_date: startDate, end_date: endDate, type: 'pfa_choice_submission' }, // Données à mettre à jour
+          { upsert: true, new: true } // Crée une nouvelle entrée si elle n'existe pas
+      );
+      console.log(`Période de choix des PFA sauvegardée : du ${startDate} au ${endDate}`);
+      return updatedPeriod; // Retourne la période mise à jour
+  } catch (error) {
+      console.error("Erreur lors de la sauvegarde de la période :", error.message);
+      throw error;
+  }
+};
+
+// Fonction pour publier les PFA
+exports.publishPFA = async (req, res) => {
+  const { response } = req.params; // Récupère le paramètre "response" (true ou false)
+  const { startDate, endDate } = req.body; // Récupère les dates de début et de fin de la période
+
+  try {
+      if (response === 'true') {
+          // Récupérer les PFA non rejetés
+          const pfas = await PFA.find({ status: { $ne: 'rejected' } });
+          if (pfas.length === 0) {
+              return res.status(404).json({ message: 'Aucun PFA non rejeté trouvé.' });
+          }
+
+          // Publier les PFA non rejetés (changer leur statut en "publié")
+          await PFA.updateMany({ status: { $ne: 'rejected' } }, { $set: { status: 'publié' } });
+          console.log("PFA non rejetés publiés avec succès.");
+
+          // Si des dates sont fournies, mettre à jour la période de choix des étudiants
+          if (startDate && endDate) {
+              await saveOrUpdatePfaChoicePeriod(startDate, endDate);
+          }
+
+          return res.status(200).json({ message: 'PFA publiés et période de choix mise à jour.' });
+      } else {
+          // Masquer tous les PFA (rendre invisibles)
+          await PFA.updateMany({}, { $set: { isVisible: false } }); // Exemple de champ `isVisible`
+          console.log("Liste des PFA masquée.");
+
+          return res.status(200).json({ message: 'Liste des PFA masquée.' });
+      }
+  } catch (error) {
+      console.error("Erreur lors de la publication des PFA :", error.message);
+      res.status(500).json({ error: 'Erreur interne du serveur', details: error.message });
+  }
+};
