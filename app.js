@@ -11,7 +11,9 @@ const competencesRoutes = require('./routes/CompetencesRoutes');
 const subjectRoutes = require('./routes/SubjectRoutes')
 const periodRoutes = require('./routes/PeriodRouter');
 const PFARoutes = require('./routes/PFA');
+const internshipRoutes=require('./routes/internshipRouter');
 const Authrouter = require('./routes/auth');
+const teacherRoutes = require('./routes/teacherRoutes');
 const cors = require('cors');
 
 
@@ -62,6 +64,8 @@ app.use('/api/subjects', subjectRoutes);
 app.use("/api/auth", Authrouter);
 app.use('/api/Period', periodRoutes);
 app.use('/api/PFA', PFARoutes);
+app.use('/api/internship',internshipRoutes)
+app.use('/api/teachers',teacherRoutes)
 
 
 server.listen(PORT, () => {
