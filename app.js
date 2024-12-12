@@ -10,7 +10,9 @@ const app = express();
 const userRoutes = require('./routes/UserRouter');
 const periodRoutes = require('./routes/PeriodRouter');
 const PFARoutes = require('./routes/PFA');
+const internshipRoutes=require('./routes/internshipRouter');
 const Authrouter = require('./routes/auth');
+const teacherRoutes = require('./routes/teacherRoutes');
 const cors = require('cors');
 
 
@@ -64,6 +66,8 @@ app.use('/api', userRoutes);
 app.use("/api/auth", Authrouter);
 app.use('/api/Period', periodRoutes);
 app.use('/api/PFA', PFARoutes);
+app.use('/api/internship',internshipRoutes)
+app.use('/api/teachers',teacherRoutes)
 
 // Start the server
 server.listen(PORT, () => {

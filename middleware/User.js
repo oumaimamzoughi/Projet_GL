@@ -36,7 +36,7 @@ exports.isAdmin = (req, res, next) => {
       res.status(403).json({ error: "no access to this route" });
     }
   } catch (e) {
-    res.status(401).json({ error: error.message });
+    res.status(401).json({ error: e.message });
   }
 };
 
@@ -51,4 +51,24 @@ exports.isTeacher = (req, res, next) => {
   } catch (error) {
     res.status(401).json({ error: error.message });
   }
+};
+
+exports.isStudent = (req, res, next) => {
+  try {
+    if (req.auth.role === "student") {
+      next();
+    } else {
+      res.status(403).json({ error: "no access to this route" });
+    }
+  } catch (e) {
+    res.status(401).json({ error: error.message });
+  }
+};
+
+exports.isStillStudent = (req, res, next) => {
+
+  if (req.user.graduationDate && new Date(req.user.graduationDate) < new Date()) {
+    return res.status(403).json({ message: 'You are no longer a student.' });
+  }
+  next();
 };
