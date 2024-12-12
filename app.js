@@ -1,4 +1,3 @@
-
 const express = require('express');
 const http = require('http');
 const mongoose = require('mongoose');
@@ -62,7 +61,7 @@ app.use("/api/auth", Authrouter);
 app.use('/api/Period', periodRoutes);
 app.use('/api/PFA', PFARoutes);
 
-// Start the server
+
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
