@@ -7,7 +7,8 @@ require('dotenv').config();
 // Import your Express app
 const app = express();
 const userRoutes = require('./routes/UserRouter');
-const competencesRoutes = require('./routes/CompetencesRoutes')
+const competencesRoutes = require('./routes/CompetencesRoutes');
+const subjectRoutes = require('./routes/SubjectRoutes')
 const periodRoutes = require('./routes/PeriodRouter');
 const PFARoutes = require('./routes/PFA');
 const Authrouter = require('./routes/auth');
@@ -57,6 +58,7 @@ io.on('connection', (socket) => {
 // Use the user routes
 app.use('/api/users', userRoutes);
 app.use('/api/competences', competencesRoutes);
+app.use('/api/subjects', subjectRoutes);
 app.use("/api/auth", Authrouter);
 app.use('/api/Period', periodRoutes);
 app.use('/api/PFA', PFARoutes);
