@@ -26,12 +26,12 @@ router.put('/:id', updateSubject);
 router.delete('/:id', deleteSubject);
 
 // Hide or unhide a subject by ID
-router.put('/:id', toggleSubjectVisibility);
+router.put('/visibility/:id', toggleSubjectVisibility);
 
 //get subjects by Student or Teacher
-router.get('/:id', getSubjectsByUser);
+router.get('/user/:id', getSubjectsByUser);
 
 // Hide or unhide a subject by ID by Admin
-router.put('/:id', toggleSubjectVisibilityByAdmin);
+router.put('/visibilityByAdmin/:id', toggleSubjectVisibilityByAdmin);
 
 module.exports = router;
