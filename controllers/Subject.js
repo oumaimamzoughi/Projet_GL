@@ -15,7 +15,17 @@ exports.createSubject = async (req, res) => {
 // Get all subjects
 exports.getAllSubjects = async (req, res) => {
   try {
-    const subjects = await Subject.find();
+    const isAdmin = req.user.role === 'admin'; // Check if the user is admin
+    let subjects;
+
+    if (isAdmin) {
+      // Admin can see all subjects
+      subjects = await Subject.find();
+    } else {
+      // Non-admins (teachers, students) see only non-masked subjects
+      subjects = await Subject.find({ masked: false });
+    }
+
     res.status(200).json(subjects);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -86,14 +96,15 @@ exports.toggleSubjectVisibility = async (req, res) => {
 exports.getSubjectsByTeacher = async (req, res) => {
   try {
     const { teacherId } = req.params;
-
     const teacher = await Teacher.findById(teacherId).populate('subjects');
 
     if (!teacher) {
       return res.status(404).json({ message: 'Teacher not found' });
     }
 
-    res.status(200).json(teacher.subjects);
+    // Filter out masked subjects for non-admins
+    const visibleSubjects = teacher.subjects.filter(subject => !subject.masked);
+    res.status(200).json(visibleSubjects);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -110,7 +121,35 @@ exports.getSubjectsByStudent = async (req, res) => {
       return res.status(404).json({ message: 'Student not found' });
     }
 
-    res.status(200).json(student.subjects);
+    // Filter out masked subjects for non-admins
+    const visibleSubjects = student.subjects.filter(subject => !subject.masked);
+    res.status(200).json(visibleSubjects);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.toggleSubjectVisibility = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { masked } = req.body;
+
+    if (typeof masked !== 'boolean') {
+      return res.status(400).json({ message: 'Invalid value for masked. It must be a boolean.' });
+    }
+
+    // Check if the current user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Only admins can change visibility' });
+    }
+
+    const subject = await Subject.findByIdAndUpdate(id, { masked }, { new: true });
+
+    if (!subject) {
+      return res.status(404).json({ message: 'Subject not found' });
+    }
+
+    res.status(200).json(subject);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
