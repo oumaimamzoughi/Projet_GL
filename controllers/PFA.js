@@ -56,6 +56,20 @@ exports.getAllPFAs = async (req, res) => {
   }
 };
 
+exports.getPFAByAdmin_Id = async (req, res) => {
+  try {
+    const pfa = await PFA.findById(req.params.id);
+    if (!pfa) {
+      return res.status(404).json({ message: "PFA not found" });
+    }
+    res.status(200).json(pfa);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+
 // Get a specific PFA by ID
 exports.getPFAById = async (req, res) => {
   try {
@@ -121,6 +135,39 @@ exports.rejectPFA = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+exports.getTeachersPFAMine = async (req, res) => {
+  try {
+    // Récupérer l'ID de l'enseignant à partir de l'utilisateur authentifié
+    const teacherId = req.auth.userId;
+
+    // Vérifier si l'utilisateur est un enseignant
+    const teacher = await User.findById(teacherId);
+    if (!teacher || teacher.role !== 'teacher') {
+      return res.status(403).json({ message: "Accès refusé. L'utilisateur n'est pas un enseignant." });
+    }
+
+    // Rechercher tous les PFA où le champ "teacher" correspond à l'ID de l'enseignant
+    const pfas = await PFA.find({ teacher: teacherId })
+      .populate('teacher', 'firstName lastName email') // Optionnel : récupérer les détails de l'enseignant
+      .populate('student', 'firstName lastName email') // Optionnel : récupérer les détails des étudiants associés
+      .populate('partner_id', 'firstName lastName email') // Optionnel : récupérer les détails des partenaires (si travail en binôme)
+      .select('title description technologies pair_work status state student partner_id lastSentDate'); // Sélectionner les champs nécessaires
+
+    // Si aucun PFA n'est trouvé
+    if (pfas.length === 0) {
+      return res.status(404).json({ message: "Aucun PFA trouvé pour cet enseignant." });
+    }
+
+    // Retourner la liste des PFA de l'enseignant
+    res.status(200).json(pfas);
+  } catch (error) {
+    // Gérer les erreurs
+    console.error('Erreur lors de la récupération des PFA de l\'enseignant:', error.message);
+    res.status(500).json({ error: "Erreur interne du serveur" });
+  }
+};
+
 
 // Fonction pour sauvegarder ou mettre à jour la période de choix des PFA
 const saveOrUpdatePfaChoicePeriod = async (startDate, endDate) => {

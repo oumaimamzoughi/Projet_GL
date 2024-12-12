@@ -40,19 +40,20 @@ exports.isAdmin = (req, res, next) => {
     res.status(401).json({ error: error.message });
   }
 };
-
 exports.isTeacher = (req, res, next) => {
   try {
-    // Accéder à req.auth au lieu de req.user
+    console.log("Auth data:", req.auth); // Vérifiez ce qui est dans req.auth
     if (req.auth && req.auth.role === "teacher") {
       next();
     } else {
+      console.log("User is not a teacher:", req.auth.role); // Si ce n'est pas un enseignant
       res.status(403).json({ message: "No access to this route." });
     }
   } catch (error) {
     res.status(401).json({ error: error.message });
   }
 };
+
 
 exports.isStudent = (req, res, next) => {
   try {
