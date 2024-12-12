@@ -92,6 +92,7 @@ exports.toggleSubjectVisibility = async (req, res) => {
   }
 };
 
+//get subjects by Student or Teacher
 exports.getSubjectsByUser = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -109,8 +110,8 @@ exports.getSubjectsByUser = async (req, res) => {
   }
 };
 
-
-exports.toggleSubjectVisibility = async (req, res) => {
+// Hide or unhide a subject by ID by Admin
+exports.toggleSubjectVisibilityByAdmin = async (req, res) => {
   try {
     const { id } = req.params;
     const { masked } = req.body;
