@@ -1,7 +1,7 @@
-const { io, connectedUsers } = require('../server');
+const { io, connectedUsers } = require('../app');
 const Notification = require('../models/Notification.model');
 const User = require('../models/User.model');
-const sendEmail = require('../utils/emailService');
+const sendEmail = require('../services/emailService');
 
 const sendNotification = async (userId, { title, message }) => {
   // Save the notification in the database

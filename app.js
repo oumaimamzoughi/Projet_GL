@@ -6,36 +6,56 @@ const mongoose = require('mongoose');
 // Import your Express app
 const app = express();
 const userRoutes = require('./routes/UserRouter');
+const competencesRoutes = require('./routes/CompetencesRoutes')
 const periodRoutes = require('./routes/PeriodRouter');
 const PFARoutes = require('./routes/PFA');
 const Authrouter = require('./routes/auth');
 const cors = require('cors');
 
+
+// Middleware to parse JSON request bodies
+app.use(express.json());
+app.use(cors());
+
+// MongoDB Atlas Configuration
 mongoose
-  .connect("mongodb://localhost:27017/Node_project")
-  .then(function () {
-    console.log("Connnection MongoDB réussi");
-  })
-  .catch(function (e) {
-    console.log("Connnection échoué");
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log('Connected to MongoDB Atlas'))
+  .catch((error) => console.error('Error connecting to MongoDB:', error));
+
+// Create an HTTP server
+const server = http.createServer(app);
+
+// Initialize Socket.IO
+const io = socketIo(server);
+
+const PORT = process.env.PORT || 3000;
+const connectedUsers = new Map(); // Maps userId to socketId
+
+io.on('connection', (socket) => {
+  console.log('A user connected:', socket.id);
+
+  // Register the user to track their connection
+  socket.on('registerUser', (userId) => {
+    connectedUsers.set(userId, socket.id);
+    console.log(`User ${userId} connected with socket ID: ${socket.id}`);
   });
 
-  app.listen(5000, () => {
-    console.log("Serveur démarré sur le port 5000");
+  // Handle user disconnect
+  socket.on('disconnect', () => {
+    for (const [userId, socketId] of connectedUsers.entries()) {
+      if (socketId === socket.id) {
+        connectedUsers.delete(userId);
+        console.log(`User ${userId} disconnected`);
+        break;
+      }
+    }
+  });
 });
 
-
-  
-
-app.use(express.json());
-app.use(cors()); //ici tous le monde passe , il faut ajouter une liste de middleware
-app.use(express.json());
-
-
-
-
 // Use the user routes
-app.use('/api', userRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/competences', competencesRoutes);
 app.use("/api/auth", Authrouter);
 app.use('/api/Period', periodRoutes);
 app.use('/api/PFA', PFARoutes);

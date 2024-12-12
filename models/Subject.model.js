@@ -2,16 +2,17 @@ const mongoose = require('mongoose');
 const Chapter = require('./Chapter.model');
 const Competence = require('./Competence.model');
 const Evaluation = require('./Evaluation.model');
+const { string } = require('joi');
 
 // Define the Subject schema
 const subjectSchema = new mongoose.Schema({
   id_Subject: {
-    type: Number, // Integer for the subject ID
+    type: Number, 
     required: true,
     unique: true,
   },
   title: {
-    type: String, // Title of the subject
+    type: String, 
     required: true,
     trim: true,
   },
@@ -20,36 +21,39 @@ const subjectSchema = new mongoose.Schema({
     default:true,
   },
   description: {
-    type: String, // Description of the subject
+    type: String,
     required: false,
     trim: true,
   },
   nb_hour: {
-    type: Number, // Number of hours for the subject
+    type: Number, 
     required: true,
   },
   semester: {
-    type: String, // Semester during which the subject is taught
+    type: String, 
     required: true,
     trim: true,
   },
   level: {
-    type: String, // Level of the subject (e.g., "beginner", "intermediate", "advanced")
+    type: String, 
     required: true,
     trim: true,
   },
   chapters: {
-    type: [Chapter.schema], // Embedded array of Chapter subdocuments
+    type: [Chapter.schema], 
     required: false,
   },
   competences: {
-    type: mongoose.Schema.Types.ObjectId, ref: 'Competence' , // Embedded array of Competence subdocuments
+    type: mongoose.Schema.Types.ObjectId, ref: 'Competence' ,
     required: false,
   },
   evaluation: {
-    type: Evaluation.schema, // Single embedded document for Evaluation
+    type: Evaluation.schema, 
     required: false,
   },
+  advancement:{
+    type:String,
+  }
 });
 
 // Create the Subject model

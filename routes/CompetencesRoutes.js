@@ -6,20 +6,20 @@ const {
     getCompetenceById,
     updateCompetence,
     deleteCompetence,
-} = require("../controllers/Competense")
+} = require("../controllers/Competence")
 // Create a new competence
-router.post('/competence', createCompetence);
+router.post('/', createCompetence);
 
 // Get all competences
-router.get('/competences/', getAllCompetences);
+router.get('/', getAllCompetences);
 
 // Get a specific competence by ID
-router.get('/competences/:id', getCompetenceById);
+router.get('/:id', getCompetenceById);
 
 // Update a competence by ID
-router.put('/competences/:id', updateCompetence);
+router.put('/:id', updateCompetence);
 
 // Delete a competence by ID
-router.delete('/competences/:id', deleteCompetence);
+router.delete('/:id', deleteCompetence);
 
 module.exports = router;
