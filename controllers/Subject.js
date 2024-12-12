@@ -1,6 +1,5 @@
 const Subject = require('../models/Subject.model');
-const Teacher = require('../models/Teacher.model');
-const Student = require('../models/Student.model');
+const User = require('../models/User.model');
 // Create a new subject
 exports.createSubject = async (req, res) => {
   try {
@@ -15,7 +14,17 @@ exports.createSubject = async (req, res) => {
 // Get all subjects
 exports.getAllSubjects = async (req, res) => {
   try {
-    const subjects = await Subject.find();
+    const isAdmin = req.user.role === 'admin'; // Check if the user is admin
+    let subjects;
+
+    if (isAdmin) {
+      // Admin can see all subjects
+      subjects = await Subject.find();
+    } else {
+      // Non-admins (teachers, students) see only non-masked subjects
+      subjects = await Subject.find({ masked: false });
+    }
+
     res.status(200).json(subjects);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -83,34 +92,45 @@ exports.toggleSubjectVisibility = async (req, res) => {
   }
 };
 
-exports.getSubjectsByTeacher = async (req, res) => {
+exports.getSubjectsByUser = async (req, res) => {
   try {
-    const { teacherId } = req.params;
+    const { userId } = req.params;
+    const user = await User.findById(userId).populate('subjects');
 
-    const teacher = await Teacher.findById(teacherId).populate('subjects');
-
-    if (!teacher) {
-      return res.status(404).json({ message: 'Teacher not found' });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    res.status(200).json(teacher.subjects);
+    // Filter out masked subjects for non-admins
+    const visibleSubjects = user.subjects.filter(subject => !subject.masked);
+    res.status(200).json(visibleSubjects);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-exports.getSubjectsByStudent = async (req, res) => {
+
+exports.toggleSubjectVisibility = async (req, res) => {
   try {
-    const { studentId } = req.params;
+    const { id } = req.params;
+    const { masked } = req.body;
 
-    // Find the student and populate their subjects
-    const student = await Student.findById(studentId).populate('subjects');
-
-    if (!student) {
-      return res.status(404).json({ message: 'Student not found' });
+    if (typeof masked !== 'boolean') {
+      return res.status(400).json({ message: 'Invalid value for masked. It must be a boolean.' });
     }
 
-    res.status(200).json(student.subjects);
+    // Check if the current user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Only admins can change visibility' });
+    }
+
+    const subject = await Subject.findByIdAndUpdate(id, { masked }, { new: true });
+
+    if (!subject) {
+      return res.status(404).json({ message: 'Subject not found' });
+    }
+
+    res.status(200).json(subject);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

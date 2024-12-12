@@ -1,4 +1,3 @@
-
 const express = require('express');
 const http = require('http');
 const mongoose = require('mongoose');
@@ -8,6 +7,7 @@ require('dotenv').config();
 // Import your Express app
 const app = express();
 const userRoutes = require('./routes/UserRouter');
+const competencesRoutes = require('./routes/CompetencesRoutes')
 const periodRoutes = require('./routes/PeriodRouter');
 const PFARoutes = require('./routes/PFA');
 const internshipRoutes=require('./routes/internshipRouter');
@@ -16,18 +16,13 @@ const teacherRoutes = require('./routes/teacherRoutes');
 const cors = require('cors');
 
 
-
-  app.listen(5000, () => {
-    console.log("Serveur démarré sur le port 5000");
-});
-
-  app.use(express.json());
-app.use(cors()); //ici tous le monde passe , il faut ajouter une liste de middleware
+// Middleware to parse JSON request bodies
 app.use(express.json());
+app.use(cors());
 
 // MongoDB Atlas Configuration
 mongoose
-  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(process.env.MONGO_URI)
   .then(() => console.log('Connected to MongoDB Atlas'))
   .catch((error) => console.error('Error connecting to MongoDB:', error));
 
@@ -62,14 +57,15 @@ io.on('connection', (socket) => {
 });
 
 // Use the user routes
-app.use('/api', userRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/competences', competencesRoutes);
 app.use("/api/auth", Authrouter);
 app.use('/api/Period', periodRoutes);
 app.use('/api/PFA', PFARoutes);
 app.use('/api/internship',internshipRoutes)
 app.use('/api/teachers',teacherRoutes)
 
-// Start the server
+
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
