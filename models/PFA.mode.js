@@ -2,11 +2,7 @@ const mongoose = require('mongoose');
 
 // Define the PFA schema
 const pfaSchema = new mongoose.Schema({
-  id: {
-    type: Number, // Integer for the PFA ID
-    required: true,
-    unique: true,
-  },
+  
   title: {
     type: String, // Title of the PFA
     required: true,
@@ -30,19 +26,20 @@ const pfaSchema = new mongoose.Schema({
   },
   status: {
     type: String, // Status of the PFA
-    default: 'pending', // Default status
+    default: 'ongoing', // Default status
   },
   state: {
     type: String, // Current state of the PFA
-    default: 'draft', // Default state
+    default: 'null', // Default state
   },
-  student: {
-    type: String, // Student name or ID
-    required: true,
+  cin_student: {
+    type: Number, // Student name or ID
+    default: null, 
   },
   teacher: {
-    type: String, // Teacher name or ID
-    required: true,
+    type: mongoose.Schema.Types.ObjectId,
+    ref:"User", // Teacher name or ID
+    required: true, 
   },
 });
 
