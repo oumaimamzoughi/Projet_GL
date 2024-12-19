@@ -17,10 +17,9 @@ const UserSchema = new mongoose.Schema({
       ref: 'Subject',
     },
   ],
-  class: { type: String, required: true },
+  class: { type: String,  },
   year:{
     type: String,
-    required: true,
 },
 }, {
   timestamps: true, 
