@@ -9,8 +9,15 @@ const UserSchema = new mongoose.Schema({
   role: {type:String,required:true,enum: ['student', 'admin', "teacher"], // Restrict to specific roles
     default: 'student',
 },
+courses: {
+  type: [String], 
+  required: false, 
+},
   situation:{ type: String, required: true },
   password: { type: String, required: true },
+  graduationDate: { type: Date },
+  internships: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Internship' }],
+  
   subjects: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -24,7 +31,6 @@ const UserSchema = new mongoose.Schema({
 }, {
   timestamps: true, 
 });
-
 
 const User = mongoose.model('User', UserSchema);
 
