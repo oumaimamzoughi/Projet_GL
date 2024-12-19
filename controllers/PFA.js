@@ -88,22 +88,71 @@ exports.getPFAById = async (req, res) => {
 // Update a PFA by ID
 exports.updatePFA = async (req, res) => {
   try {
-    const pfa = await PFA.findByIdAndUpdate(req.params.id, req.body, {
+    // Vérifier si une période de type 'teacher_submission' est ouverte
+    const currentDate = new Date();
+    const openPeriod = await Period.findOne({
+      type: "teacher_submission",
+      end_date: { $gt: currentDate }, // end_date > currentDate
+    });
+
+    if (!openPeriod) {
+      return res
+        .status(400)
+        .json({ message: "No open period for teacher submissions." });
+    }
+
+    // Vérifier si le sujet appartient à l'enseignant connecté
+    const teacherId = req.auth.userId; // ID de l'enseignant connecté
+    const pfa = await PFA.findById(req.params.id);
+
+    if (!pfa) {
+      return res.status(404).json({ message: "PFA not found." });
+    }
+
+    if (String(pfa.teacher) !== String(teacherId)) {
+      return res
+        .status(403)
+        .json({ message: "You do not have permission to modify this PFA." });
+    }
+
+    // Mettre à jour le PFA
+    const updatedPFA = await PFA.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     });
-    if (!pfa) {
-      return res.status(404).json({ message: "PFA not found" });
-    }
-    res.status(200).json(pfa);
+
+    res.status(200).json(updatedPFA);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
 // Delete a PFA by ID
 exports.deletePFA = async (req, res) => {
   try {
-    const pfa = await PFA.findByIdAndDelete(req.params.id);
+    const currentDate = new Date();
+    const openPeriod = await Period.findOne({
+      type: "teacher_submission",
+      end_date: { $gt: currentDate }, // end_date > currentDate
+    });
+
+    if (!openPeriod) {
+      return res
+        .status(400)
+        .json({ message: "No open period for teacher submissions." });
+    }
+    // Vérifier si le sujet appartient à l'enseignant connecté
+    const teacherId = req.auth.userId; // ID de l'enseignant connecté
+    const pfa = await PFA.findById(req.params.id);
+
+    if (!pfa) {
+      return res.status(404).json({ message: "PFA not found." });
+    }
+
+    if (String(pfa.teacher) !== String(teacherId)) {
+      return res
+        .status(403)
+        .json({ message: "You do not have permission to modify this PFA." });
+    }
     if (!pfa) {
       return res.status(404).json({ message: "PFA not found" });
     }
@@ -136,38 +185,40 @@ exports.rejectPFA = async (req, res) => {
   }
 };
 
-exports.getTeachersPFAMine = async (req, res) => {
-  try {
-    // Récupérer l'ID de l'enseignant à partir de l'utilisateur authentifié
-    const teacherId = req.auth.userId;
-
-    // Vérifier si l'utilisateur est un enseignant
-    const teacher = await User.findById(teacherId);
-    if (!teacher || teacher.role !== 'teacher') {
-      return res.status(403).json({ message: "Accès refusé. L'utilisateur n'est pas un enseignant." });
+exports.getTeachersPFAMinee = async (req, res) => {
+  
+    try {
+      // Filtre pour récupérer uniquement les sujets postés par l'enseignant authentifié
+      const teacherId = req.auth.userId
+      console.log("User :", teacherId)
+      const projects_pfa = await PFA.find({ teacher: teacherId })
+     
+      res.status(200).json({ model: projects_pfa, message: 'Succès' })
+    } catch (e) {
+      res.status(400).json({ error: e.message, message: "Problème d'accès" })
     }
-
-    // Rechercher tous les PFA où le champ "teacher" correspond à l'ID de l'enseignant
-    const pfas = await PFA.find({ teacher: teacherId })
-      .populate('teacher', 'firstName lastName email') // Optionnel : récupérer les détails de l'enseignant
-      .populate('student', 'firstName lastName email') // Optionnel : récupérer les détails des étudiants associés
-      .populate('partner_id', 'firstName lastName email') // Optionnel : récupérer les détails des partenaires (si travail en binôme)
-      .select('title description technologies pair_work status state student partner_id lastSentDate'); // Sélectionner les champs nécessaires
-
-    // Si aucun PFA n'est trouvé
-    if (pfas.length === 0) {
-      return res.status(404).json({ message: "Aucun PFA trouvé pour cet enseignant." });
-    }
-
-    // Retourner la liste des PFA de l'enseignant
-    res.status(200).json(pfas);
-  } catch (error) {
-    // Gérer les erreurs
-    console.error('Erreur lors de la récupération des PFA de l\'enseignant:', error.message);
-    res.status(500).json({ error: "Erreur interne du serveur" });
   }
-};
 
+  exports.getPFADetailsTeacher = async (req, res) => {
+    try {
+      // Récupérer l'ID du PFA à partir des paramètres de la requête
+      const pfaId = req.params.id;
+      const teacherId = req.auth.userId; // ID de l'enseignant connecté (injecté par loggedMiddleware)
+  
+      // Vérifier que le PFA appartient à l'enseignant connecté
+      const pfa = await PFA.findOne({ _id: pfaId, teacher: teacherId });
+  
+      if (!pfa) {
+        return res.status(403).json({ message: "Ce sujet ne vous appartient pas." });
+      }
+  
+      // Retourner les informations du PFA
+      res.status(200).json({ pfa, message: "Succès" });
+    } catch (error) {
+      res.status(500).json({ error: error.message, message: "Erreur serveur." });
+    }
+  };
+  
 
 // Fonction pour sauvegarder ou mettre à jour la période de choix des PFA
 const saveOrUpdatePfaChoicePeriod = async (startDate, endDate) => {

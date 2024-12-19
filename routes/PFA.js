@@ -3,14 +3,14 @@ const router = express.Router();
 const PFAController = require('../controllers/PFA');
 const middleAuth = require('../middleware/User');
 
-router.get("/Teach ",middleAuth.loggedMiddleware, middleAuth.isTeacher,PFAController.getTeachersPFAMine)
-
+router.get(
+    "/Teach",middleAuth.loggedMiddleware,middleAuth.isTeacher,PFAController.getTeachersPFAMinee);
 router.post("/add",middleAuth.loggedMiddleware, middleAuth.isTeacher, PFAController.createPFA)
 router.put("/update/:id" ,middleAuth.loggedMiddleware, middleAuth.isTeacher,PFAController.updatePFA)
-router.get("Admin/:id" ,middleAuth.loggedMiddleware, middleAuth.isAdmin ,PFAController.getPFAByAdmin_Id)
+router.get("/admin/:id" ,middleAuth.loggedMiddleware, middleAuth.isAdmin ,PFAController.getPFAByAdmin_Id)
 
 router.delete("/delete/:id",middleAuth.loggedMiddleware, middleAuth.isTeacher ,PFAController.deletePFA)
-
+router.get('/:id/mine',middleAuth.loggedMiddleware,middleAuth.isTeacher,PFAController.getPFADetailsTeacher);
 router.get("/",middleAuth.loggedMiddleware, middleAuth.isAdmin,PFAController.getAllPFAs)
 router.patch("/:id/reject",middleAuth.loggedMiddleware, middleAuth.isAdmin ,PFAController.rejectPFA);
 
