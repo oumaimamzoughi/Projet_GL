@@ -436,8 +436,12 @@ exports.indicateTeacherApproval = async (req, res) => {
 
     // Mise à jour de l'acceptation par l'enseignant
     subjectChoice.teacherApproval = teacherApproval;
-
     await subjectChoice.save();
+    const pfa = await PFA.findById(pfaId);
+    if (teacherApproval) {
+      pfa.state = "affecté";
+      await pfa.save();
+    }
 
     return res.status(200).json({
       message: "L'approbation de l'enseignant a été mise à jour.",
@@ -479,7 +483,8 @@ exports.assignStudentToPFA = async (req, res) => {
       pfa.student = studentId;
       pfa.partner_id = null;  // Pas de partenaire si le PFA ne nécessite pas de binôme
     }
-
+    // Mise à jour du statut du PFA
+    pfa.state = "affecté";
     await pfa.save(); // Sauvegarder les changements dans le PFA
 
     res.status(200).json({ message: "Etudiant affecté au PFA.", pfa });
