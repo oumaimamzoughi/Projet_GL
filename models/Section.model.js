@@ -3,23 +3,12 @@ const mongoose = require('mongoose');
 // Define the Section schema
 const sectionSchema = new mongoose.Schema({
   id_Section: {
-    type: Number, // Integer for the section ID
-    required: true,
-    unique: true,
+    type: String,
+    unique: true, // REMOVE this if `null` values are expected
+    sparse: true, // ADD this if you still want unique non-null values
   },
   name: {
-    type: String, // Name of the section
-    required: true,
-    trim: true,
-  },
-  content: {
-    type: String, // Content of the section
-    required: true,
-    trim: true,
-  },
-  status: {
-    type: String, // Status of the section (e.g., "active", "inactive")
-    required: true,
+    type: String,
     trim: true,
   },
 });
