@@ -45,7 +45,7 @@ exports.updatePeriod = async (req, res) => {
       return res.status(404).json({ message: 'Period not found' });
     }
     res.status(200).json({
-      model: task,
+      model: Period,
       message: "Object modifié",
     });
   } catch (error) {

@@ -1,12 +1,24 @@
 const SubjectChoice = require('../models/SubjectChoice.model');
-
+const { v4: uuidv4 } = require('uuid');
 // Create a new subject choice
 exports.createSubjectChoice = async (req, res) => {
   try {
+    // Generate unique id_chapter for chapters if missing
+    if (req.body.chapters) {
+      req.body.chapters = req.body.chapters.map(chapter => {
+        if (!chapter.id_chapter) {
+          chapter.id_chapter = uuidv4();
+        }
+        return chapter;
+      });
+    }
+
     const newSubjectChoice = new SubjectChoice(req.body);
     await newSubjectChoice.save();
+
     res.status(201).json(newSubjectChoice);
   } catch (error) {
+    console.error("Error creating SubjectChoice:", error);
     res.status(400).json({ error: error.message });
   }
 };

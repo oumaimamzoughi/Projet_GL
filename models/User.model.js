@@ -24,10 +24,9 @@ courses: {
       ref: 'Subject',
     },
   ],
-  class: { type: String, required: true },
+  class: { type: String,  },
   year:{
     type: String,
-    required: true,
 },
 }, {
   timestamps: true, 

@@ -17,12 +17,13 @@ exports.addInternship = async (req, res) => {
   try {
     const { type } = req.params;
     const { title } = req.body;
-
+    console.log(req.body);
+    
     if (!title) {
       return res.status(400).json({ message: 'Title is required.' });
     }
 
-    const userId = req.user.id //"6752c59a346b414452d45ba3";
+    const userId = "6752c59a346b414452d45ba3";//req.user.id 
     const user = await User.findById(userId);
 
     if (!user) {
