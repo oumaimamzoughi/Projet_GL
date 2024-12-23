@@ -3,22 +3,29 @@ const Section = require('./Section.model');
 
 // Define the Chapter schema
 const chapterSchema = new mongoose.Schema({
-  id_chapter: {
-    type: Number, // Integer for the chapter ID
-    required: true,
-    unique: true,
-  },
   name: {
     type: String, // Name of the chapter
-    required: true,
+    required: false,
     trim: true,
   },
   status: {
     type: String, // Status of the chapter (e.g., "draft", "published")
-    required: true,
+    required: false,
     trim: true,
   },
-  sections: [Section.schema]
+  sections: [
+    {
+      title: {
+        type: String,
+        required: true,
+        trim: true,
+      },
+      content: {
+        type: String,
+        required: false,
+      },
+    }
+  ],
 });
 
 // Create the Chapter model

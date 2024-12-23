@@ -5,6 +5,7 @@ const JWT_SECRET = "ISAMM_SECRET";
 
 
 exports.loggedMiddleware = async (req, res, next) => {
+  console.log("enter logged mid")
   try {
     const token = req.headers.authorization.split(" ")[1];
    
@@ -37,10 +38,11 @@ exports.isAdmin = (req, res, next) => {
       res.status(403).json({ error: "no access to this route" });
     }
   } catch (e) {
-    res.status(401).json({ error: error.message });
+    res.status(401).json({ error: e.message });
   }
 };
 exports.isTeacher = (req, res, next) => {
+  console.log("enter midl")
   try {
     console.log("Auth data:", req.auth); // Vérifiez ce qui est dans req.auth
     if (req.auth && req.auth.role === "teacher") {
@@ -57,13 +59,21 @@ exports.isTeacher = (req, res, next) => {
 
 exports.isStudent = (req, res, next) => {
   try {
-    // Accéder à req.auth au lieu de req.user
-    if (req.auth && req.auth.role === "student") {
+    if (req.auth.role === "student") {
       next();
     } else {
-      res.status(403).json({ message: "No access to this route." });
+      res.status(403).json({ error: "no access to this route" });
     }
-  } catch (error) {
+  } catch (e) {
     res.status(401).json({ error: error.message });
   }
+};
+
+exports.isStillStudent = (req, res, next) => {
+
+  if (req.user.graduationDate && new Date(req.user.graduationDate) < new Date()) {
+    return res.status(403).json({ message: 'You are no longer a student.' });
+  }
+  next();
+
 };

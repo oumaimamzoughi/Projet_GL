@@ -39,10 +39,12 @@ const subjectSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
-  chapters: {
-    type: [Chapter.schema], 
-    required: false,
-  },
+  chapters: [
+    {
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: 'Chapter'
+    }
+  ],
   competences: {
     type: mongoose.Schema.Types.ObjectId, ref: 'Competence' ,
     required: false,

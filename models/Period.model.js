@@ -12,7 +12,7 @@ const periodSchema = new mongoose.Schema({
   },
   type: {
     type: String, // Type of the period
-    enum: ['teacher_submission', 'internship_submission', 'pfa_choice_submission'], // Allowed values
+    enum: ['teacher_submission', 'internship_submission', 'pfa_choice_submission', 'internship_submission_2eme', 'internship_submission_1ere'], // Allowed values
     required: true, // Mandatory field
   },
 });
