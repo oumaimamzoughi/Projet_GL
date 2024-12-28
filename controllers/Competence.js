@@ -1,10 +1,13 @@
 const Competence = require('../models/Competence.model');
-
+const Subject = require('../models/Subject.model');
+const User = require('../models/User.model')
+const { sendNotification } = require('../services/notificationService')
 // Create a new competence
 exports.createCompetence = async (req, res) => {
   try {
     const newCompetence = new Competence(req.body);
     await newCompetence.save();
+    console.log(newCompetence)
     res.status(201).json(newCompetence);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -94,16 +97,16 @@ exports.deleteCompetence = async (req, res) => {
       message: `La compétence "${competence.name}" a été supprimée.`,
     };
 
-    for (const admin of admins) {
-      await sendNotification(admin._id, notificationDetails);
+    // for (const admin of admins) {
+    //   await sendNotification(admin._id, notificationDetails);
 
-      await sendEmail({
-        to: admin.email,
-        subject: notificationDetails.title,
-        text: notificationDetails.message,
-        html: `<p>${notificationDetails.message}</p>`,
-      });
-    }
+    //   await sendEmail({
+    //     to: admin.email,
+    //     subject: notificationDetails.title,
+    //     text: notificationDetails.message,
+    //     html: `<p>${notificationDetails.message}</p>`,
+    //   });
+    // }
 
     res.status(204).send();
   } catch (error) {

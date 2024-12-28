@@ -5,6 +5,7 @@ const JWT_SECRET = "ISAMM_SECRET";
 
 
 exports.loggedMiddleware = async (req, res, next) => {
+  console.log("enter logged mid")
   try {
     const token = req.headers.authorization.split(" ")[1];
    
@@ -41,6 +42,7 @@ exports.isAdmin = (req, res, next) => {
   }
 };
 exports.isTeacher = (req, res, next) => {
+  console.log("enter midl")
   try {
     console.log("Auth data:", req.auth); // Vérifiez ce qui est dans req.auth
     if (req.auth && req.auth.role === "teacher") {

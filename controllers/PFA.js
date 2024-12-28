@@ -37,7 +37,7 @@ exports.createPFA = async (req, res) => {
       //  // Ajout de l'ID de l'utilisateur connecté
     });
    
-
+   
     // Sauvegarder le PFA dans la base de données
     await newPFA.save();
     res.status(201).json(newPFA);
@@ -175,7 +175,7 @@ exports.rejectPFA = async (req, res) => {
     // Mettre à jour le statut à "rejected"
     pfa.status = "rejected";
     await pfa.save();
-
+    
     res.status(200).json({
       message: "PFA has been rejected successfully.",
       pfa,
@@ -186,13 +186,12 @@ exports.rejectPFA = async (req, res) => {
 };
 
 exports.getTeachersPFAMinee = async (req, res) => {
-  
-    try {
+  try {
       // Filtre pour récupérer uniquement les sujets postés par l'enseignant authentifié
       const teacherId = req.auth.userId
       console.log("User :", teacherId)
       const projects_pfa = await PFA.find({ teacher: teacherId })
-     
+
       res.status(200).json({ model: projects_pfa, message: 'Succès' })
     } catch (e) {
       res.status(400).json({ error: e.message, message: "Problème d'accès" })
@@ -204,21 +203,21 @@ exports.getTeachersPFAMinee = async (req, res) => {
       // Récupérer l'ID du PFA à partir des paramètres de la requête
       const pfaId = req.params.id;
       const teacherId = req.auth.userId; // ID de l'enseignant connecté (injecté par loggedMiddleware)
-  
+
       // Vérifier que le PFA appartient à l'enseignant connecté
       const pfa = await PFA.findOne({ _id: pfaId, teacher: teacherId });
-  
+
       if (!pfa) {
         return res.status(403).json({ message: "Ce sujet ne vous appartient pas." });
       }
-  
+
       // Retourner les informations du PFA
       res.status(200).json({ pfa, message: "Succès" });
     } catch (error) {
       res.status(500).json({ error: error.message, message: "Erreur serveur." });
     }
   };
-  
+
 
 // Fonction pour sauvegarder ou mettre à jour la période de choix des PFA
 const saveOrUpdatePfaChoicePeriod = async (startDate, endDate) => {
@@ -245,7 +244,7 @@ const saveOrUpdatePfaChoicePeriod = async (startDate, endDate) => {
 exports.publishPFA = async (req, res) => {
   const { response } = req.params; // Récupère le paramètre "response" (true ou false)
   const { startDate, endDate } = req.body; // Récupère les dates de début et de fin de la période
-
+  
   try {
       if (response === 'true') {
           // Récupérer les PFA non rejetés
@@ -257,7 +256,7 @@ exports.publishPFA = async (req, res) => {
           // Publier les PFA non rejetés (changer leur statut en "publié")
           await PFA.updateMany({ status: { $ne: 'rejected' } }, { $set: { status: 'publié' } });
           console.log("PFA non rejetés publiés avec succès.");
-
+          
           // Si des dates sont fournies, mettre à jour la période de choix des étudiants
           if (startDate && endDate) {
               await saveOrUpdatePfaChoicePeriod(startDate, endDate);

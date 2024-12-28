@@ -14,10 +14,10 @@ exports.createSubject = async (req, res) => {
 // Get all subjects
 exports.getAllSubjects = async (req, res) => {
   try {
-    const isAdmin = req.user.role === 'admin'; // Check if the user is admin
+    const isAdmin = req.user?.role === 'admin'; // Check if the user is admin
     let subjects;
 
-    if (isAdmin) {
+    if (isAdmin  || true) {
       // Admin can see all subjects
       subjects = await Subject.find();
     } else {
