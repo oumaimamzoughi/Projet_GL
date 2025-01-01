@@ -1,8 +1,7 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 // Define the PFA schema
 const pfaSchema = new mongoose.Schema({
-  
   title: {
     type: String, // Title of the PFA
     required: true,
@@ -23,38 +22,38 @@ const pfaSchema = new mongoose.Schema({
   partner_id: {
     type: mongoose.Schema.Types.ObjectId, // ID of the partner (if pair work)
     default: null, // Default is null when no partner
-    ref: 'User', // Reference to the User model (partner)
+    ref: "User", // Reference to the User model (partner)
   },
   status: {
     type: String, // Status of the PFA
-    default: 'ongoing', // Default status
+    default: "ongoing", // Default status
   },
   state: {
     type: String, // Current state of the PFA
-    default: 'non affecté', // Default state
+    default: "non affecté", // Default state
   },
-  
+
   teacher: {
     type: mongoose.Schema.Types.ObjectId,
-    ref:"User", // Teacher name or ID
-    required: true, 
+    ref: "User", // Teacher name or ID
+    required: true,
   },
-  student: { 
+  student: {
     type: mongoose.Schema.Types.ObjectId, // ID of the partner (if pair work)
     default: null, // Default is null when no partner
-    ref: 'User', // Reference to the User model (partner)
+    ref: "User", // Reference to the User model (partner)
   },
-  
+
   isSent: {
     type: Boolean,
     default: false, // Indique si ce PFA a déjà été envoyé
-},
-lastSentDate: {
+  },
+  lastSentDate: {
     type: Date, // Date du dernier envoi de ce PFA
-},
-});
+  },
 
+});
 // Create the PFA model
-const PFA = mongoose.model('PFA', pfaSchema);
+const PFA = mongoose.model("PFA", pfaSchema);
 
 module.exports = PFA;

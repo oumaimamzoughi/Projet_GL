@@ -32,7 +32,7 @@ exports.createPFA = async (req, res) => {
       technologies,
       pair_work,
       cin_student,
-       teacher: req.auth.userId,
+      teacher: req.auth.userId,
        
       //  // Ajout de l'ID de l'utilisateur connecté
     });
@@ -486,3 +486,55 @@ exports.assignStudentToPFA = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+
+// //affecter PFA avec force
+// exports.assignPFA = async (req, res) => {
+//   try {
+//     const adminId = req.auth.userId; // ID de l'utilisateur connecté (admin)
+//     const { studentId, pfaId, force } = req.body; // Inclure "force" dans la requête
+
+//     // Vérifier si l'utilisateur connecté est un administrateur
+//     const admin = await User.findById(adminId);
+//     if (!admin || admin.role !== 'admin') {
+//       return res.status(403).json({ error: "Accès refusé. Seuls les administrateurs peuvent affecter un PFA." });
+//     }
+
+//     // Vérifier si l'étudiant existe
+//     const student = await User.findById(studentId);
+//     if (!student || student.role !== 'student') {
+//       return res.status(400).json({ error: "L'étudiant spécifié n'existe pas ou n'est pas un étudiant valide." });
+//     }
+
+//     // Vérifier si le PFA existe
+//     const pfa = await PFA.findById(pfaId);
+//     if (!pfa) {
+//       return res.status(404).json({ error: "Le PFA spécifié n'existe pas." });
+//     }
+
+//     // Si le PFA est déjà affecté
+//     if (pfa.state === 'affecté') {
+//       if (force !== true) {
+//         return res.status(400).json({ error: "Le PFA est déjà affecté. Ajoutez 'force=true' pour le réaffecter." });
+//       }
+
+//       // Retirer le PFA de l'étudiant précédent
+//       const previousStudent = await User.findById(pfa.student);
+//       if (previousStudent) {
+//         console.log(`Le PFA est retiré de l'étudiant précédent : ${previousStudent.name}`);
+//       }
+
+//       pfa.student = null; // Réinitialiser l'affectation
+//     }
+
+//     // Affecter le PFA au nouvel étudiant
+//     pfa.student = studentId;
+//     pfa.state = 'affecté';
+//     await pfa.save();
+
+//     res.status(200).json({ message: "Le PFA a été réaffecté avec succès.", pfa });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };

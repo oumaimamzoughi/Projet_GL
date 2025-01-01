@@ -31,6 +31,10 @@ const subjectChoiceSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User', // Référence au binôme (si applicable)
     default: null, 
+  },
+  force: {
+    type: Boolean, // Indicates if pair work is involved
+  default: false,
   }
 }, {
   timestamps: true,
