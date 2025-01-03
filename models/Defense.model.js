@@ -2,38 +2,42 @@ const mongoose = require('mongoose');
 
 // Define the Defense schema
 const defenseSchema = new mongoose.Schema({
-  id: {
-    type: Number, // Integer for the Defense ID
+  pfa: {
+    type: mongoose.Schema.Types.ObjectId, // Référence au PFA
+    ref: 'PFA',
     required: true,
-    unique: true,
+    
   },
   date: {
-    type: Date, // Date of the defense
+    type: Date, // Date de la soutenance
     required: true,
   },
   room: {
-    type: String, // Room for the defense
+    type: String, // Salle de la soutenance
     required: true,
   },
-  hour: {
-    type: String, // Time of the defense
+  time: {
+    type: String, // Heure de la soutenance
     required: true,
   },
   teacher: {
-    type: String, // Name of the teacher involved
+    type: mongoose.Schema.Types.ObjectId, // Référence à l'enseignant
+    ref: 'User',
     required: true,
   },
-  student: {
-    type: String, // Name of the student presenting
-    required: true,
+  rapporteur: {
+    type: mongoose.Schema.Types.ObjectId, // Référence au rapporteur
+    ref: 'User',
+    required: false,
   },
-  statut: {
-    type: String, // Status of the defense (e.g., scheduled, completed)
-    default: 'scheduled', // Default status
+  published: {
+    type: Boolean,
+    default: false, 
   },
-});
 
-// Create the Defense model
+},{ timestamps: true });
+
 const Defense = mongoose.model('Defense', defenseSchema);
 
 module.exports = Defense;
+
