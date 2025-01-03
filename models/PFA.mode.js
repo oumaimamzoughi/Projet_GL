@@ -51,7 +51,10 @@ const pfaSchema = new mongoose.Schema({
   lastSentDate: {
     type: Date, // Date du dernier envoi de ce PFA
   },
-
+  force: {
+    type: Boolean, // Indicates if pair work is involved
+  default: false,
+  }
 });
 // Create the PFA model
 const PFA = mongoose.model("PFA", pfaSchema);
