@@ -15,15 +15,8 @@ const chapterSchema = new mongoose.Schema({
   },
   sections: [
     {
-      title: {
-        type: String,
-        required: true,
-        trim: true,
-      },
-      content: {
-        type: String,
-        required: false,
-      },
+          type: mongoose.Schema.Types.ObjectId, 
+          ref: 'Section'
     }
   ],
 });
