@@ -15,6 +15,7 @@ const DefenseRoutes= require ('./routes/Defense');
 const internshipRoutes=require('./routes/internshipRouter');
 const Authrouter = require('./routes/auth');
 const teacherRoutes = require('./routes/teacherRoutes');
+const ChoisePFa = require('./routes/ChoisePFa');
 const cors = require('cors');
 
 
@@ -68,6 +69,7 @@ app.use('/api/PFA', PFARoutes);
 app.use('/api/defenses',DefenseRoutes);
 app.use('/api/internship',internshipRoutes)
 app.use('/api/teachers',teacherRoutes)
+app.use('/api/choice',ChoisePFa)
 
 
 server.listen(PORT, () => {

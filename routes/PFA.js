@@ -5,7 +5,7 @@ const middleAuth = require('../middleware/User');
 
 router.get("/Teach",middleAuth.loggedMiddleware,middleAuth.isTeacher,PFAController.getTeachersPFAMinee);
 
-router.post("/add",/*middleAuth.loggedMiddleware, middleAuth.isTeacher,*/ PFAController.createPFA)
+router.post("/add",middleAuth.loggedMiddleware, middleAuth.isTeacher, PFAController.createPFA)
 router.put("/update/:id" ,/*middleAuth.loggedMiddleware, middleAuth.isTeacher,*/PFAController.updatePFA)
 router.get("/Admin/:id" ,/*middleAuth.loggedMiddleware, middleAuth.isAdmin ,*/PFAController.getPFAByAdmin_Id)
 
