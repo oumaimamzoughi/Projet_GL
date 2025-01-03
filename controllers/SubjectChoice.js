@@ -1,15 +1,15 @@
-const SubjectChoice = require('../models/SubjectChoice.model');
-const User = require('../models/User.model');
-const PFA = require('../models/PFA.mode');
-const Mail = require('../models/email.model');
-const { v4: uuidv4 } = require('uuid');
+const SubjectChoice = require("../models/SubjectChoice.model");
+const User = require("../models/User.model");
+const PFA = require("../models/PFA.mode");
+const Mail = require("../models/email.model");
+const { v4: uuidv4 } = require("uuid");
 const { sendEmail } = require("../services/emailService");
 // Create a new subject choice
 exports.createSubjectChoice = async (req, res) => {
   try {
     // Generate unique id_chapter for chapters if missing
     if (req.body.chapters) {
-      req.body.chapters = req.body.chapters.map(chapter => {
+      req.body.chapters = req.body.chapters.map((chapter) => {
         if (!chapter.id_chapter) {
           chapter.id_chapter = uuidv4();
         }
@@ -37,13 +37,16 @@ exports.getAllSubjectChoices = async (req, res) => {
   }
 };
 
-
 // Update a subject choice by name
 exports.updateSubjectChoice = async (req, res) => {
   try {
-    const subjectChoice = await SubjectChoice.findOneAndUpdate({ subject_name: req.params.name }, req.body, { new: true });
+    const subjectChoice = await SubjectChoice.findOneAndUpdate(
+      { subject_name: req.params.name },
+      req.body,
+      { new: true }
+    );
     if (!subjectChoice) {
-      return res.status(404).json({ message: 'Subject choice not found' });
+      return res.status(404).json({ message: "Subject choice not found" });
     }
     res.status(200).json(subjectChoice);
   } catch (error) {
@@ -54,9 +57,11 @@ exports.updateSubjectChoice = async (req, res) => {
 // Delete a subject choice by name
 exports.deleteSubjectChoice = async (req, res) => {
   try {
-    const subjectChoice = await SubjectChoice.findOneAndDelete({ subject_name: req.params.name });
+    const subjectChoice = await SubjectChoice.findOneAndDelete({
+      subject_name: req.params.name,
+    });
     if (!subjectChoice) {
-      return res.status(404).json({ message: 'Subject choice not found' });
+      return res.status(404).json({ message: "Subject choice not found" });
     }
     res.status(204).send();
   } catch (error) {
@@ -67,9 +72,9 @@ exports.deleteSubjectChoice = async (req, res) => {
 exports.getAllStudentChoices = async (req, res) => {
   try {
     const choices = await SubjectChoice.find()
-      .populate('student', 'firstName lastName ') // Récupère les détails de l'étudiant
-      .populate('pfa', 'title description') // Récupère les détails du PFA
-      .populate('partner', 'firstName lastName') // Récupère les détails du partenaire
+      .populate("student", "firstName lastName ") // Récupère les détails de l'étudiant
+      .populate("pfa", "title description") // Récupère les détails du PFA
+      .populate("partner", "firstName lastName") // Récupère les détails du partenaire
       .exec();
 
     res.status(200).json({
@@ -77,14 +82,17 @@ exports.getAllStudentChoices = async (req, res) => {
       data: choices,
     });
   } catch (error) {
-    console.error('Erreur lors de la récupération des choix des étudiants:', error);
+    console.error(
+      "Erreur lors de la récupération des choix des étudiants:",
+      error
+    );
     res.status(500).json({
       success: false,
-      message: 'Erreur serveur. Impossible de récupérer les choix des étudiants.',
+      message:
+        "Erreur serveur. Impossible de récupérer les choix des étudiants.",
     });
   }
 };
-
 
 // Fonction pour affecter un enseignant à un choix d'étudiant
 exports.assignTeacherToChoice = async (choice, teacher) => {
@@ -121,7 +129,7 @@ exports.assignTeacherToChoice = async (choice, teacher) => {
   } catch (error) {
     console.error("Erreur lors de l'affectation de l'enseignant :", error);
   }
-}
+};
 
 // exports.assignPFA = async (req, res) => {
 //   try {
@@ -179,7 +187,6 @@ exports.assignTeacherToChoice = async (choice, teacher) => {
 //           subject: pfa.title,
 //         });
 
-
 //         assignedPFAs.add(pfa._id.toString());
 //       }
 //     }
@@ -197,20 +204,19 @@ exports.assignTeacherToChoice = async (choice, teacher) => {
 //   }
 // };
 
-
 exports.assignPFA = async (req, res) => {
   try {
     const results = [];
     const subjectChoices = await SubjectChoice.find()
       .populate({
-        path: 'pfa',
+        path: "pfa",
         populate: {
-          path: 'teacher',
-          model: 'User',
-          select: 'firstName lastName', // Inclure ces champs
+          path: "teacher",
+          model: "User",
+          select: "firstName lastName", // Inclure ces champs
         },
       })
-      .populate('student partner');
+      .populate("student partner");
 
     const assignedPFAs = new Set();
 
@@ -221,10 +227,11 @@ exports.assignPFA = async (req, res) => {
         continue;
       }
 
-    
-
       if (partner) {
-        const partnerPFA = await PFA.findOne({ student: partner._id, state: 'affecté' }).populate('teacher');
+        const partnerPFA = await PFA.findOne({
+          student: partner._id,
+          state: "affecté",
+        }).populate("teacher");
 
         if (partnerPFA) {
           await PFA.findByIdAndUpdate(partnerPFA._id, {
@@ -245,16 +252,16 @@ exports.assignPFA = async (req, res) => {
         }
       }
 
-      if (teacherApproval || (!partner && pfa.state === 'non affecté')) {
+      if (teacherApproval || (!partner && pfa.state === "non affecté")) {
         const updatedPFA = await PFA.findByIdAndUpdate(
           pfa._id,
           {
             student: student._id,
             partner_id: partner?._id || null,
-            state: 'affecté',
+            state: "affecté",
           },
           { new: true }
-        ).populate('teacher');
+        ).populate("teacher");
 
         results.push({
           teacher: updatedPFA.teacher
@@ -281,9 +288,6 @@ exports.assignPFA = async (req, res) => {
     });
   }
 };
-
-
-
 
 // exports.assignSubjectManually = async (req, res) => {
 //   try {
@@ -420,7 +424,10 @@ exports.assignPFAManually = async (req, res) => {
     const { studentId, partnerId, teacherId, subjectId } = req.body;
 
     // Vérifier si l'étudiant est déjà affecté à un autre sujet
-    const existingPFA = await PFA.findOne({ student: studentId, state: 'affecté' });
+    const existingPFA = await PFA.findOne({
+      student: studentId,
+      state: "affecté",
+    });
 
     if (existingPFA) {
       return res.status(400).json({
@@ -440,7 +447,7 @@ exports.assignPFAManually = async (req, res) => {
     // Vérifier si l'enseignant existe
     const teacher = await User.findById(teacherId);
 
-    if (!teacher || teacher.role !== 'teacher') {
+    if (!teacher || teacher.role !== "teacher") {
       return res.status(404).json({
         error: "L'enseignant spécifié n'existe pas ou n'est pas un enseignant.",
       });
@@ -453,7 +460,7 @@ exports.assignPFAManually = async (req, res) => {
         student: studentId,
         partner_id: partnerId || null,
         teacher: teacherId,
-        state: 'affecté',
+        state: "affecté",
       },
       { new: true } // Retourner le document mis à jour
     );
@@ -593,13 +600,15 @@ exports.assignPFAManually = async (req, res) => {
 //   }
 // };
 
-
 exports.assignPFAWithForce = async (req, res) => {
   try {
     const { studentId, partnerId, teacherId, subjectId, force } = req.body;
 
     // Vérifier si l'étudiant est déjà affecté à un sujet
-    const existingPFA = await PFA.findOne({ student: studentId, state: 'affecté' });
+    const existingPFA = await PFA.findOne({
+      student: studentId,
+      state: "affecté",
+    });
 
     if (force && existingPFA) {
       // Si force est activé, on annule l'affectation existante et réaffecte l'étudiant
@@ -609,7 +618,7 @@ exports.assignPFAWithForce = async (req, res) => {
       await PFA.findByIdAndUpdate(
         oldSubject._id,
         {
-          state: 'non affecté',
+          state: "non affecté",
           student: null,
           partner_id: null,
         },
@@ -625,7 +634,7 @@ exports.assignPFAWithForce = async (req, res) => {
       }
 
       // Si le sujet est déjà affecté, on le réaffecte à un autre étudiant et partenaire
-      if (newSubject.state === 'affecté') {
+      if (newSubject.state === "affecté") {
         // Récupérer les informations de l'ancien étudiant et partenaire du sujet
         const oldStudent = newSubject.student;
         const oldPartner = newSubject.partner_id;
@@ -633,11 +642,13 @@ exports.assignPFAWithForce = async (req, res) => {
         // Trouver des sujets disponibles pour réaffecter l'ancien étudiant et partenaire
         const availableSubjects = await PFA.find({
           student: { $nin: [oldStudent, oldPartner] },
-          state: 'non affecté',
-        }).populate('teacher', 'firstName lastName');
+          state: "non affecté",
+        }).populate("teacher", "firstName lastName");
 
         // Trier les sujets disponibles par priorité (en supposant que chaque sujet a un champ 'priority')
-        const sortedSubjects = availableSubjects.sort((a, b) => a.priority - b.priority);
+        const sortedSubjects = availableSubjects.sort(
+          (a, b) => a.priority - b.priority
+        );
 
         // Choisir le premier sujet disponible pour réaffecter l'ancien étudiant et partenaire
         const newAssignedSubject = sortedSubjects[0];
@@ -649,7 +660,7 @@ exports.assignPFAWithForce = async (req, res) => {
             student: oldStudent,
             partner_id: oldPartner,
             teacher: teacherId,
-            state: 'affecté',
+            state: "affecté",
           },
           { new: true }
         );
@@ -658,7 +669,7 @@ exports.assignPFAWithForce = async (req, res) => {
         await PFA.findByIdAndUpdate(
           newSubject._id,
           {
-            state: 'non affecté',
+            state: "non affecté",
             student: null,
             partner_id: null,
           },
@@ -681,16 +692,18 @@ exports.assignPFAWithForce = async (req, res) => {
             student: studentId,
             partner_id: partnerId || null,
             teacher: teacherId,
-            state: 'affecté',
+            state: "affecté",
           },
           { new: true }
         );
 
         result.newStudent = {
           studentId: studentId,
-          partnerId: partnerId || 'Aucun partenaire',
+          partnerId: partnerId || "Aucun partenaire",
           subjectAssigned: newSubject.title,
-          message: `L'étudiant ${studentId} et son partenaire ${partnerId || 'Aucun partenaire'} ont été affectés au sujet ${newSubject.title}.`,
+          message: `L'étudiant ${studentId} et son partenaire ${
+            partnerId || "Aucun partenaire"
+          } ont été affectés au sujet ${newSubject.title}.`,
         };
 
         res.status(200).json({
@@ -705,7 +718,7 @@ exports.assignPFAWithForce = async (req, res) => {
             student: studentId,
             partner_id: partnerId || null,
             teacher: teacherId,
-            state: 'affecté',
+            state: "affecté",
           },
           { new: true }
         );
@@ -718,7 +731,8 @@ exports.assignPFAWithForce = async (req, res) => {
     } else if (existingPFA && !force) {
       // Si l'étudiant est déjà affecté et force est false
       return res.status(400).json({
-        error: "Cet étudiant est déjà affecté à un autre sujet. Utilisez 'force' pour forcer l'affectation.",
+        error:
+          "Cet étudiant est déjà affecté à un autre sujet. Utilisez 'force' pour forcer l'affectation.",
       });
     } else {
       // Si l'étudiant n'était pas affecté, on effectue une affectation normale
@@ -735,7 +749,7 @@ exports.assignPFAWithForce = async (req, res) => {
           student: studentId,
           partner_id: partnerId || null,
           teacher: teacherId,
-          state: 'affecté',
+          state: "affecté",
         },
         { new: true }
       );
@@ -757,17 +771,17 @@ exports.assignPFAWithForce = async (req, res) => {
 exports.getFinalPFEAssignments = async (req, res) => {
   try {
     // Récupérer tous les sujets avec 'state' = 'affecté'
-    const pfes = await PFA.find({ state: 'affecté' })
-      .populate('teacher', 'firstName lastName')
-      .populate('student', 'firstName lastName')
-      .populate('partner_id', 'firstName lastName')
+    const pfes = await PFA.find({ state: "affecté" })
+      .populate("teacher", "firstName lastName")
+      .populate("student", "firstName lastName")
+      .populate("partner_id", "firstName lastName")
       .exec();
 
     if (!pfes || pfes.length === 0) {
       return res.status(404).json({ message: "Aucun sujet affecté trouvé." });
     }
 
-    const result = pfes.map(pfe => ({
+    const result = pfes.map((pfe) => ({
       subject: pfe.title,
       teacher: {
         firstName: pfe.teacher.firstName,
@@ -778,27 +792,36 @@ exports.getFinalPFEAssignments = async (req, res) => {
         lastName: pfe.student.lastName,
       },
       partner: pfe.partner_id
-        ? { firstName: pfe.partner_id.firstName, lastName: pfe.partner_id.lastName }
+        ? {
+            firstName: pfe.partner_id.firstName,
+            lastName: pfe.partner_id.lastName,
+          }
         : null,
       state: pfe.state,
     }));
 
     res.status(200).json({
-      message: 'Sujets PFE affectés récupérés avec succès.',
+      message: "Sujets PFE affectés récupérés avec succès.",
       result,
     });
   } catch (error) {
-    console.error('Erreur lors de la récupération des sujets PFE affectés :', error);
+    console.error(
+      "Erreur lors de la récupération des sujets PFE affectés :",
+      error
+    );
     res.status(500).json({
-      error: 'Erreur interne du serveur',
+      error: "Erreur interne du serveur",
       details: error.message,
     });
   }
 };
 
-
 exports.sendList = async (req, res) => {
-  const recipients = ['fitourions@gmail.com', 'oumaimahrnii@gmail.com', 'islemhani52@gmail.com']; // Liste des destinataires
+  const recipients = [
+    "fitourions@gmail.com",
+    "oumaimahrnii@gmail.com",
+    "islemhani52@gmail.com",
+  ]; // Liste des destinataires
 
   try {
     // Récupérer la configuration d'envoi
@@ -812,21 +835,23 @@ exports.sendList = async (req, res) => {
 
     const isModified = mailConfig.isModified;
     const subject = isModified
-      ? 'Liste des sujets PFE mise à jour'
-      : 'Première liste des sujets PFE publiés';
+      ? "Liste des sujets PFA mise à jour"
+      : "Première liste des sujets PFE publiés";
     const message = isModified
-      ? 'La liste des sujets PFE a été modifiée. Consultez les nouveaux sujets ici.'
-      : 'Voici la liste des sujets PFE publiés.';
+      ? "La liste des sujets PFE a été modifiée. Consultez les nouveaux sujets ici."
+      : "Voici la liste des sujets PFE publiés.";
 
     // Récupérer les sujets publiés
-    const publishedPFAs = await PFA.find({ state: 'affecté' })
-      .populate('teacher', 'firstName lastName')
-      .populate('student', 'firstName lastName')
-      .populate('partner_id', 'firstName lastName')
+    const publishedPFAs = await PFA.find({ state: "affecté" })
+      .populate("teacher", "firstName lastName")
+      .populate("student", "firstName lastName")
+      .populate("partner_id", "firstName lastName")
       .exec();
 
     if (!publishedPFAs || publishedPFAs.length === 0) {
-      return res.status(404).json({ message: 'Aucun sujet PFE publié à envoyer.' });
+      return res
+        .status(404)
+        .json({ message: "Aucun sujet PFA publié à envoyer." });
     }
 
     // Envoyer l'email aux destinataires
@@ -846,12 +871,16 @@ exports.sendList = async (req, res) => {
     await mailConfig.save();
 
     res.status(200).json({
-      message: 'Liste des sujets PFE envoyée avec succès.',
+      message: "Liste des sujets PFA envoyée avec succès.",
       sentAt: now,
     });
   } catch (error) {
-    console.error('Erreur lors de l\'envoi de la liste des sujets PFE :', error.message);
-    res.status(500).json({ error: 'Erreur interne du serveur', details: error.message });
+    console.error(
+      "Erreur lors de l'envoi de la liste des sujets PFA :",
+      error.message
+    );
+    res
+      .status(500)
+      .json({ error: "Erreur interne du serveur", details: error.message });
   }
 };
-
