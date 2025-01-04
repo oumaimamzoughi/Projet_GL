@@ -46,7 +46,7 @@ router.get('/user/:id', getSubjectsByUser);
 router.put('/visibilityByAdmin/:id', toggleSubjectVisibilityByAdmin);
 
 // update chapter status and advancement
-router.put('/:id/advancement', updateChapterInSubject);
+router.put('/advancement/:subjectId', updateChapterInSubject);
 
 
 module.exports = router;

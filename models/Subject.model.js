@@ -57,7 +57,8 @@ const subjectSchema = new mongoose.Schema({
     }
   ],
   evaluation: {
-    type: Evaluation.schema, 
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Evaluation',
     required: false,
   },
   advancement:{

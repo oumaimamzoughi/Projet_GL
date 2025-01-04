@@ -411,40 +411,86 @@ exports.updateChapterInSubject = async (req, res) => {
     const { subjectId } = req.params; // Get subject ID from the route parameters
     const { chapterId, status, date } = req.body; // Get chapter data from the request body
 
-    // Find the subject by ID
-    const subject = await Subject.findById(subjectId).populate('chapters');
+    // Find the subject by ID and populate its chapters
+    const subject = await Subject.findById(subjectId).populate('chapters').populate('evaluation');
     if (!subject) {
       return res.status(404).json({ message: 'Subject not found' });
     }
-
     // Check if the chapter exists in the subject's chapters
-    const chapterExists = subject.chapters.some(
+    const chapter = subject.chapters.find(
       (chapter) => chapter._id.toString() === chapterId
     );
 
-    if (!chapterExists) {
+    if (!chapter) {
       return res.status(404).json({ message: 'Chapter not associated with the subject' });
     }
 
     // Update the chapter's status and date
-    const updatedChapter = await Chapter.findByIdAndUpdate(
-      chapterId,
-      { 
-        status: status || 'terminated', 
-        date: date || new Date() 
-      },
-      { new: true } // Return the updated chapter
+    chapter.status = status || 'terminated';
+    chapter.date = date || new Date();
+
+    const updatedChapter = await chapter.save(); // Save the updated chapter
+
+    // Calculate the percentage of terminated chapters
+    const totalChapters = subject.chapters.length;
+    const terminatedChapters = subject.chapters.filter(
+      (chapter) => chapter.status === 'terminated'
+    ).length;
+
+    const advancementPercentage = Math.round((terminatedChapters / totalChapters) * 100);
+
+    // Update the advancement field in the subject
+    subject.advancement = `${advancementPercentage}%`;
+    await Subject.updateOne(
+      { _id: subjectId },
+      { $set: { advancement: `${advancementPercentage}%` } }
     );
 
-    if (!updatedChapter) {
-      return res.status(404).json({ message: 'Chapter not found' });
-    }
+    // Find users to notify (admin and students associated with the subject)
+    const usersToNotify = await User.find({
+      $or: [
+        { role: 'admin' },
+        { role: 'student', subjects: subjectId }
+      ]
+    });
+
+    // Extract emails of the users to notify
+    const emails = usersToNotify.map(user => user.email);
+
+    // Compose the email content in French
+    const emailSubject = 'Mise à jour du chapitre';
+    const emailText = `Bonjour,
+
+          Nous vous informons que le chapitre "${updatedChapter.title}" du sujet "${subject.title}" a été mis à jour. 
+
+          L'avancement de ce sujet est maintenant de ${subject.advancement}. 
+
+          Merci de votre attention.
+
+          Cordialement,
+          L'équipe pédagogique`;
+
+    const emailHtml = `<p>Bonjour,</p>
+                      <p>Nous vous informons que le chapitre "<strong>${updatedChapter.title}</strong>" du sujet "<strong>${subject.title}</strong>" a été mis à jour.</p>
+                      <p>L'avancement de ce sujet est maintenant de <strong>${subject.advancement}</strong>.</p>
+                      <p>Merci de votre attention.</p>
+                      <p>Cordialement,</p>
+                      <p>L'équipe pédagogique</p>`;
+
+    // Send the email (ensure sendEmail function is defined)
+    await sendEmail({
+      to: emails.join(', '), // Send to multiple recipients
+      subject: emailSubject,
+      text: emailText,
+      html: emailHtml
+    });
 
     res.status(200).json({
       message: 'Chapter updated successfully',
       chapter: updatedChapter,
+      advancement: subject.advancement, // Include updated advancement in the response
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-}
+};
