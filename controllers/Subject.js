@@ -5,6 +5,7 @@ const Section= require('../models/Section.model');
 const Competence = require('../models/Competence.model')
 const SubjectHistory = require('../models/SubjectHistory.model'); 
 const SubjectModification = require('../models/SubjectModification.model')
+const { sendEmail }= require('../services/emailService')
 // Create a new subject
 exports.createSubject = async (req, res) => {
   try {
@@ -309,9 +310,10 @@ exports.getAllModifications = async (req, res) => {
 };
 
 exports.approveModification = async (req, res) => {
+  console.log("heelooo");
   try {
     const modificationId = req.params.id;
-    
+
     // Find the modification
     const modification = await SubjectModification.findById(modificationId).populate('id_user');
     if (!modification) {
@@ -343,25 +345,31 @@ exports.approveModification = async (req, res) => {
     });
     await subjectHistory.save();
 
+    // Prepare the update data by excluding _id
+    const { _id, ...updatedSubjectData } = modification.subject.toObject();
+
     // Update the subject with the proposed changes
-    await Subject.findByIdAndUpdate(subject._id, modification.subject, { new: true });
+    await Subject.findByIdAndUpdate(subject._id, updatedSubjectData, { new: true });
 
     // Mark the modification as validated
     modification.validated = true;
     await modification.save();
 
     // Notify the user who proposed the modification
-    await sendEmail(
-      modification.id_user.email,
-      'Modification Approved',
-      `Your proposed modification to the subject "${subject.title}" has been approved.`
-    );
+    await sendEmail({
+      to: modification.id_user.email,
+      subject:'Modification Approved',
+      text:`Your proposed modification to the subject "${subject.title}" has been approved.`,
+      html: `<p>Your proposed modification to the subject "${subject.title}" has been approved.</p>`,
+    });
 
     res.status(200).json({ message: 'Modification approved and subject updated successfully.' });
   } catch (error) {
+    console.error("Error approving modification:", error);
     res.status(400).json({ error: error.message });
   }
 };
+
 
 exports.addModification = async (req, res) => {
   try {

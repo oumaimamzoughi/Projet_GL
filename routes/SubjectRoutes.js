@@ -14,6 +14,12 @@ const {
     approveModification,
     getAllModifications,
 } = require("../controllers/Subject")
+
+router.post('/modifications', addModification);
+
+router.get('/modifications', getAllModifications);
+
+router.put('/modifications/:id/approve', approveModification);
 // Create a new subject
 router.post('/', createSubject);
 
@@ -38,9 +44,5 @@ router.get('/user/:id', getSubjectsByUser);
 // Hide or unhide a subject by ID by Admin
 router.put('/visibilityByAdmin/:id', toggleSubjectVisibilityByAdmin);
 
-router.post('/modifications', addModification);
 
-router.get('/modifications', getAllModifications);
-
-router.put('/modifications/:id/approve', approveModification);
 module.exports = router;
