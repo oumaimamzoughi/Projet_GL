@@ -20,6 +20,14 @@ const subjectSchema = new mongoose.Schema({
     type: Boolean,
     default:true,
   },
+  used:{
+    type: Boolean,
+    default:false,
+  },
+  archive:{
+    type: Boolean,
+    default:false,
+  },
   description: {
     type: String,
     required: false,
@@ -45,10 +53,12 @@ const subjectSchema = new mongoose.Schema({
       ref: 'Chapter'
     }
   ],
-  competences: {
-    type: mongoose.Schema.Types.ObjectId, ref: 'Competence' ,
-    required: false,
-  },
+  competences: [
+    {
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Competence' ,
+    }
+  ],
   evaluation: {
     type: Evaluation.schema, 
     required: false,

@@ -8,7 +8,9 @@ require('dotenv').config();
 const app = express();
 const userRoutes = require('./routes/UserRouter');
 const competencesRoutes = require('./routes/CompetencesRoutes');
-const subjectRoutes = require('./routes/SubjectRoutes')
+const subjectRoutes = require('./routes/SubjectRoutes');
+const chapterRoutes = require('./routes/ChapterRoutes');
+const sectionRoutes = require('./routes/SectionRoutes');
 const periodRoutes = require('./routes/PeriodRouter');
 const PFARoutes = require('./routes/PFA');
 const internshipRoutes=require('./routes/internshipRouter');
@@ -61,6 +63,8 @@ io.on('connection', (socket) => {
 app.use('/api/users', userRoutes);
 app.use('/api/competences', competencesRoutes);
 app.use('/api/subjects', subjectRoutes);
+app.use('/api/chapters', chapterRoutes);
+app.use('/api/sections', sectionRoutes);
 app.use("/api/auth", Authrouter);
 app.use('/api/Period', periodRoutes);
 app.use('/api/PFA', PFARoutes);

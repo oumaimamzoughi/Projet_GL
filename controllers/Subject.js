@@ -19,7 +19,12 @@ exports.getAllSubjects = async (req, res) => {
 
     if (isAdmin  || true) {
       // Admin can see all subjects
-      subjects = await Subject.find();
+      subjects = await Subject.find({ archive: false }).populate({
+        path: 'chapters', // Populate chapters
+        populate: {
+          path: 'sections', // Nested populate sections inside chapters
+        },
+      });
     } else {
       // Non-admins (teachers, students) see only non-masked subjects
       subjects = await Subject.find({ masked: false });
@@ -34,9 +39,18 @@ exports.getAllSubjects = async (req, res) => {
 // Get a specific subject by ID
 exports.getSubjectById = async (req, res) => {
   try {
-    const subject = await Subject.findById(req.params.id);
-    if (!subject) {
+    const subject = await Subject.findById(req.params.id).populate({
+        path: 'chapters', // Populate chapters
+        populate: {
+          path: 'sections', // Nested populate sections inside chapters
+        },
+      });
+    if (!subject ) {
       return res.status(404).json({ message: 'Subject not found' });
+
+    }else if (subject.archive){
+      return res.status(404).json({ message: 'Subject archived ' });
+
     }
     res.status(200).json(subject);
   } catch (error) {
@@ -47,9 +61,13 @@ exports.getSubjectById = async (req, res) => {
 // Update a subject by ID
 exports.updateSubject = async (req, res) => {
   try {
-    const subject = await Subject.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const subject = await Subject.findById(req.params.id);
     if (!subject) {
       return res.status(404).json({ message: 'Subject not found' });
+    }else if (subject.archive){
+      return res.status(404).json({ message: 'Subject archived ' });
+    }else {
+      subject = await Subject.findByIdAndUpdate(req.params.id, req.body, { new: true });
     }
     res.status(200).json(subject);
   } catch (error) {
@@ -60,9 +78,19 @@ exports.updateSubject = async (req, res) => {
 // Delete a subject by ID
 exports.deleteSubject = async (req, res) => {
   try {
-    const subject = await Subject.findByIdAndDelete(req.params.id);
+    const subject = await Subject.findById(req.params.id);
     if (!subject) {
       return res.status(404).json({ message: 'Subject not found' });
+    }else if (subject.archive){
+      return res.status(404).json({ message: 'Subject already archived ' });
+
+    }else if (!subject.used){
+      await subject.deleteOne();
+      return res.status(200).json({ message: 'Subject deleted successfully' });
+    }else {
+      subject.archive = true;
+      await subject.save();
+      return res.status(200).json({ message: 'Subject archived successfully' }); 
     }
     res.status(204).send();
   } catch (error) {

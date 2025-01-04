@@ -18,7 +18,16 @@ exports.createCompetence = async (req, res) => {
 exports.getAllCompetences = async (req, res) => {
   try {
     const competences = await Competence.find();
-    res.status(200).json(competences);
+    const populatedCompetences = await Promise.all(
+      competences.map(async (competence) => {
+        const subjects = await Subject.find({
+          competences: competence._id, // Match subjects that include this competence
+          archive: false, // Only include non-archived subjects
+        });
+        return { ...competence.toObject(), subjects };
+      })
+    );
+    res.status(200).json(populatedCompetences);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -28,10 +37,19 @@ exports.getAllCompetences = async (req, res) => {
 exports.getCompetenceById = async (req, res) => {
   try {
     const competence = await Competence.findById(req.params.id);
+    const populatedCompetences = await Promise.all(
+      competences.map(async (competence) => {
+        const subjects = await Subject.find({
+          competences: competence._id, // Match subjects that include this competence
+          archive: false, // Only include non-archived subjects
+        });
+        return { ...competence.toObject(), subjects };
+      })
+    );
     if (!competence) {
       return res.status(404).json({ message: 'Competence not found' });
     }
-    res.status(200).json(competence);
+    res.status(200).json(populatedCompetences);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -16,6 +16,12 @@ const competenceSchema = new mongoose.Schema({
     type: Boolean, // Indicates if the competence is strong or essential
     required: true,
   },
+  // subjects: [
+  //     {
+  //     type: mongoose.Schema.Types.ObjectId, 
+  //     ref: 'Subject' ,
+  //     }
+  //   ],
 });
 
 // Create the Competence model
