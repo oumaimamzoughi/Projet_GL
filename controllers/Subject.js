@@ -405,3 +405,46 @@ exports.addModification = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+exports.updateChapterInSubject = async (req, res) => {
+  try {
+    const { subjectId } = req.params; // Get subject ID from the route parameters
+    const { chapterId, status, date } = req.body; // Get chapter data from the request body
+
+    // Find the subject by ID
+    const subject = await Subject.findById(subjectId).populate('chapters');
+    if (!subject) {
+      return res.status(404).json({ message: 'Subject not found' });
+    }
+
+    // Check if the chapter exists in the subject's chapters
+    const chapterExists = subject.chapters.some(
+      (chapter) => chapter._id.toString() === chapterId
+    );
+
+    if (!chapterExists) {
+      return res.status(404).json({ message: 'Chapter not associated with the subject' });
+    }
+
+    // Update the chapter's status and date
+    const updatedChapter = await Chapter.findByIdAndUpdate(
+      chapterId,
+      { 
+        status: status || 'terminated', 
+        date: date || new Date() 
+      },
+      { new: true } // Return the updated chapter
+    );
+
+    if (!updatedChapter) {
+      return res.status(404).json({ message: 'Chapter not found' });
+    }
+
+    res.status(200).json({
+      message: 'Chapter updated successfully',
+      chapter: updatedChapter,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}

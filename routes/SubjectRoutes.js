@@ -13,6 +13,7 @@ const {
     addModification,
     approveModification,
     getAllModifications,
+    updateChapterInSubject
 } = require("../controllers/Subject")
 
 router.post('/modifications', addModification);
@@ -43,6 +44,9 @@ router.get('/user/:id', getSubjectsByUser);
 
 // Hide or unhide a subject by ID by Admin
 router.put('/visibilityByAdmin/:id', toggleSubjectVisibilityByAdmin);
+
+// update chapter status and advancement
+router.put('/:id/advancement', updateChapterInSubject);
 
 
 module.exports = router;
