@@ -3,6 +3,7 @@ const Period = require("../models/Period.model");
 const SubjectChoice = require("../models/SubjectChoice.model")
 const User = require("../models/User.model")
 const { sendEmail } = require("../services/emailService");
+const Mail = require("../models/email.model");
 
 
 // Create a new PFA
@@ -278,17 +279,26 @@ exports.publishPFA = async (req, res) => {
 
 //emailing
 exports.sendPFAList = async (req, res) => {
-    const { isModified } = req.body; // Booléen indiquant si la liste est modifiée
+    
     const recipients = ['fitourions@gmail.com', 'oumaimahrnii@gmail.com']; // Liste des destinataires
-    const subject = isModified 
-        ? 'Liste des sujets PFA mise à jour' 
-        : 'Première liste des sujets PFA publiés';
-    //const baseUrl = 'https://votre-plateforme.com/PFA'; // URL de la liste
-    const message = isModified 
-        ? `La liste des sujets PFA a été modifiée. Consultez les nouveaux sujets ici : `
-        : `Voici la liste des sujets PFA publiés : `;
-
     try {
+      // Récupérer la configuration d'envoi
+          let mailConfig = await Mail.findOne();
+      
+          // Si la configuration n'existe pas, la créer
+          if (!mailConfig) {
+            mailConfig = new Mail();
+            await mailConfig.save();
+          }
+      
+          const isModified = mailConfig.isModified;
+          const subject = isModified
+            ? "Liste des sujets PFA mise à jour"
+            : "Première liste des sujets PFE publiés";
+          const message = isModified
+            ? "La liste des sujets PFE a été modifiée. Consultez les nouveaux sujets ici."
+            : "Voici la liste des sujets PFE publiés.";
+      
         // Récupérer les PFA publiés
         const publishedPFAs = await PFA.find({ status: 'publié' });
         if (publishedPFAs.length === 0) {
@@ -344,9 +354,9 @@ exports.getPFAsByTeacher = async (req, res) => {
 //choisir pfa
 exports.createSubjectChoice = async (req, res) => {
   try {
-    const studentId = req.auth.userId;  // Assurez-vous que l'ID de l'étudiant est dans req.auth
-
+    const studentId = req.auth.userId; // Assurez-vous que l'ID de l'étudiant est dans req.auth
     const { priority, partner, teacherApproval } = req.body;
+
     // Vérifier le nombre total de choix
     const totalChoices = await SubjectChoice.countDocuments({ student: studentId });
     if (totalChoices >= 3) {
@@ -357,32 +367,51 @@ exports.createSubjectChoice = async (req, res) => {
     if (![1, 2, 3].includes(priority)) {
       return res.status(400).json({ error: "La priorité doit être 1, 2 ou 3." });
     }
-    // Vérifier qu'il n'y a pas de sujet avec la même priorité
-    const existingChoice = await SubjectChoice.findOne({ student: studentId, priority });
-    if (existingChoice) {
-      return res.status(400).json({ error: "Il existe déjà un sujet choisi avec cette priorité." });
-    }
+
     // Vérifier que le sujet PFA existe et n'est pas déjà affecté
     const pfa = await PFA.findById(req.params.id);
-    if (pfa.state === 'affecté') {
+    if (!pfa) {
+      return res.status(404).json({ error: "Sujet PFA introuvable." });
+    }
+    if (pfa.state === "affecté") {
       return res.status(400).json({ error: "Le sujet a déjà été affecté définitivement." });
     }
-     // Vérifier que le binôme est valide (si applicable)
-     if (partner) {
+
+    // Vérifier que le binôme est valide
+    if (partner) {
       const partnerExists = await User.findById(partner);
-      if (!partnerExists || partnerExists.role !== 'student') {
+      if (!partnerExists || partnerExists.role !== "student") {
         return res.status(400).json({ error: "Le binôme indiqué n'est pas valide." });
       }
+    }
 
-      const partnerExistingChoice = await SubjectChoice.findOne({ student: partner, priority });
-      if (partnerExistingChoice) {
-        return res.status(400).json({ error: "Le binôme a déjà choisi un sujet avec cette priorité." });
+    // Résoudre les conflits de priorité pour l'étudiant
+    let adjustedPriority = priority;
+    const conflictChoice = await SubjectChoice.findOne({
+      student: studentId,
+      priority: adjustedPriority,
+    });
+
+    if (conflictChoice) {
+      // Modifier la priorité de l'ancien choix de l'étudiant
+      const takenPriorities = await SubjectChoice.find({ student: studentId }).distinct("priority");
+
+      const availablePriorities = [1, 2, 3].filter((p) => !takenPriorities.includes(p));
+      if (availablePriorities.length > 0) {
+        const newPriorityForOldChoice = availablePriorities[0];
+        conflictChoice.priority = newPriorityForOldChoice;
+        await conflictChoice.save();
+
+        adjustedPriority = priority; // La priorité actuelle reste inchangée pour le nouveau choix
+      } else {
+        return res.status(400).json({ error: "Aucune priorité disponible pour ce sujet." });
       }
     }
+
     // Créer le choix principal
     const newChoice = new SubjectChoice({
       subject_name: pfa.title,
-      priority,
+      priority: adjustedPriority,
       student: studentId,
       pfa: pfa._id,
       teacherApproval,
@@ -394,7 +423,7 @@ exports.createSubjectChoice = async (req, res) => {
     if (partner) {
       const partnerChoice = new SubjectChoice({
         subject_name: pfa.title,
-        priority,
+        priority: adjustedPriority,
         student: partner,
         pfa: pfa._id,
         teacherApproval,
@@ -404,11 +433,15 @@ exports.createSubjectChoice = async (req, res) => {
       await partnerChoice.save();
     }
 
-    res.status(201).json(newChoice);
+    res.status(201).json({
+      message: `Sujet choisi avec priorité ${adjustedPriority}.`,
+      newChoice,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 //indiquer acceptation de l'enseignant
 exports.indicateTeacherApproval = async (req, res) => {
