@@ -8,7 +8,9 @@ require('dotenv').config();
 const app = express();
 const userRoutes = require('./routes/UserRouter');
 const competencesRoutes = require('./routes/CompetencesRoutes');
-const subjectRoutes = require('./routes/SubjectRoutes')
+const subjectRoutes = require('./routes/SubjectRoutes');
+const chapterRoutes = require('./routes/ChapterRoutes');
+const sectionRoutes = require('./routes/SectionRoutes');
 const periodRoutes = require('./routes/PeriodRouter');
 const PFARoutes = require('./routes/PFA');
 const DefenseRoutes= require ('./routes/Defense');
@@ -16,7 +18,9 @@ const internshipRoutes=require('./routes/internshipRouter');
 const Authrouter = require('./routes/auth');
 const teacherRoutes = require('./routes/teacherRoutes');
 const ChoisePFa = require('./routes/ChoisePFa');
+const evaluationRoutes = require('./routes/evaluationRoutes');
 const cors = require('cors');
+const { scheduleNotifications } = require('./services/scheduler');
 
 
 // Middleware to parse JSON request bodies
@@ -63,6 +67,8 @@ io.on('connection', (socket) => {
 app.use('/api/users', userRoutes);
 app.use('/api/competences', competencesRoutes);
 app.use('/api/subjects', subjectRoutes);
+app.use('/api/chapters', chapterRoutes);
+app.use('/api/sections', sectionRoutes);
 app.use("/api/auth", Authrouter);
 app.use('/api/Period', periodRoutes);
 app.use('/api/PFA', PFARoutes);
@@ -70,7 +76,9 @@ app.use('/api/defenses',DefenseRoutes);
 app.use('/api/internship',internshipRoutes)
 app.use('/api/teachers',teacherRoutes)
 app.use('/api/choice',ChoisePFa)
+app.use('/api/evaluations', evaluationRoutes);
 
+scheduleNotifications();
 
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

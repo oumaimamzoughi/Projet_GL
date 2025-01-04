@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Section = require('./Section.model');
+const { date } = require('joi');
 
 // Define the Chapter schema
 const chapterSchema = new mongoose.Schema({
@@ -13,17 +14,14 @@ const chapterSchema = new mongoose.Schema({
     required: false,
     trim: true,
   },
+  date: {
+    type: Date,
+    required: false,
+  },
   sections: [
     {
-      title: {
-        type: String,
-        required: true,
-        trim: true,
-      },
-      content: {
-        type: String,
-        required: false,
-      },
+          type: mongoose.Schema.Types.ObjectId, 
+          ref: 'Section'
     }
   ],
 });

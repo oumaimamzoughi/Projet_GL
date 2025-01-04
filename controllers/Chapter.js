@@ -14,7 +14,7 @@ exports.createChapter = async (req, res) => {
 // Get all chapters
 exports.getAllChapters = async (req, res) => {
   try {
-    const chapters = await Chapter.find();
+    const chapters = await Chapter.find().populate("sections");
     res.status(200).json(chapters);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -24,7 +24,7 @@ exports.getAllChapters = async (req, res) => {
 // Get a specific chapter by ID
 exports.getChapterById = async (req, res) => {
   try {
-    const chapter = await Chapter.findById(req.params.id);
+    const chapter = await Chapter.findById(req.params.id).populate("sections");
     if (!chapter) {
       return res.status(404).json({ message: 'Chapter not found' });
     }

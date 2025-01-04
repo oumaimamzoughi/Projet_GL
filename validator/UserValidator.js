@@ -8,6 +8,7 @@ const userValidationSchema = Joi.object({
   role: Joi.string().valid('teacher', 'student', 'admin').required(),
   situation: Joi.string().required(),
   password: Joi.string().min(6).required(),
+  subjects: Joi.array().items(Joi.string().hex().length(24))
 });
 
 module.exports = userValidationSchema;

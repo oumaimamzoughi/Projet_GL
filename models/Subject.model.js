@@ -8,7 +8,6 @@ const { string } = require('joi');
 const subjectSchema = new mongoose.Schema({
   id_Subject: {
     type: Number, 
-    required: true,
     unique: true,
   },
   title: {
@@ -19,6 +18,14 @@ const subjectSchema = new mongoose.Schema({
   masked:{
     type: Boolean,
     default:true,
+  },
+  used:{
+    type: Boolean,
+    default:false,
+  },
+  archive:{
+    type: Boolean,
+    default:false,
   },
   description: {
     type: String,
@@ -31,12 +38,10 @@ const subjectSchema = new mongoose.Schema({
   },
   semester: {
     type: String, 
-    required: true,
     trim: true,
   },
   level: {
     type: String, 
-    required: true,
     trim: true,
   },
   chapters: [
@@ -45,12 +50,15 @@ const subjectSchema = new mongoose.Schema({
       ref: 'Chapter'
     }
   ],
-  competences: {
-    type: mongoose.Schema.Types.ObjectId, ref: 'Competence' ,
-    required: false,
-  },
+  competences: [
+    {
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Competence' ,
+    }
+  ],
   evaluation: {
-    type: Evaluation.schema, 
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Evaluation',
     required: false,
   },
   advancement:{

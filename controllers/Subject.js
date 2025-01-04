@@ -1,15 +1,73 @@
 const Subject = require('../models/Subject.model');
 const User = require('../models/User.model');
+const Chapter = require('../models/Chapter.model')
+const Section= require('../models/Section.model');
+const Competence = require('../models/Competence.model')
+const SubjectHistory = require('../models/SubjectHistory.model'); 
+const SubjectModification = require('../models/SubjectModification.model')
+const { sendEmail }= require('../services/emailService')
 // Create a new subject
 exports.createSubject = async (req, res) => {
   try {
+    // Step 1: Create a new subject
     const newSubject = new Subject(req.body);
+
+    // Step 2: Create chapters and associate them with the subject
+    const chapters = req.body.chapters || []; // Get chapters data from the request body
+
+    if (chapters.length > 0) {
+      const createdChapters = await Promise.all(chapters.map(async (chapter) => {
+        if (chapter._id) {
+          // If the chapter has an _id, it's an existing chapter, so we only need to update it with sections
+          const existingChapter = await Chapter.findById(chapter._id);
+          if (chapter.sections && chapter.sections.length > 0) {
+            // Create sections within the existing chapter
+            const createdSections = await Section.insertMany(chapter.sections);
+            existingChapter.sections = createdSections.map(section => section._id); // Assign created section ids to the chapter
+          }
+          return existingChapter; // Return the existing chapter with its updated sections
+        } else {
+          // If the chapter doesn't have an _id, create a new chapter
+          const newChapter = new Chapter(chapter);
+          if (chapter.sections && chapter.sections.length > 0) {
+            // Create sections within the new chapter
+            const createdSections = await Section.insertMany(chapter.sections);
+            newChapter.sections = createdSections.map(section => section._id); // Assign created section ids to the chapter
+          }
+          return newChapter.save(); // Save the new chapter and return it
+        }
+      }));
+
+      if (req.body.competences && req.body.competences.length > 0) {
+        const competenceIds = await Promise.all(req.body.competences.map(async (competence) => {
+          if (competence._id) {
+            // If competence has _id, it's an existing competence, so just use the _id
+            return competence._id;
+          } else {
+            // If competence doesn't have _id, create a new competence
+            const newCompetence = new Competence(competence);
+            const savedCompetence = await newCompetence.save();
+            return savedCompetence._id;
+          }
+        }));
+  
+        newSubject.competences = competenceIds; // Assign competence ids to the subject
+      }
+
+      newSubject.chapters = createdChapters.map(chapter => chapter._id); // Assign created chapter ids to the subject
+    }
+
+    // Step 3: Save the subject with the associated chapters and sections
     await newSubject.save();
+
+    // Step 4: Return the created subject along with its chapters and sections
     res.status(201).json(newSubject);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
+
+
 
 // Get all subjects
 exports.getAllSubjects = async (req, res) => {
@@ -19,7 +77,21 @@ exports.getAllSubjects = async (req, res) => {
 
     if (isAdmin  || true) {
       // Admin can see all subjects
-      subjects = await Subject.find();
+      subjects = await Subject.find({ archive: false }).populate({
+        path: 'chapters', // Populate the 'chapters' field
+        populate: {
+          path: 'sections', // Nested populate to get 'sections' inside chapters
+          select: 'name' // Optionally select the fields to be populated
+        }
+      })
+      .populate({
+        path: 'competences', // Populate competences
+        select: 'title force' // Optionally select the fields to be populated
+      })
+      .populate({
+        path: 'evaluation', // Populate the evaluation field
+        select: 'id_evaluation message' // Select the evaluation fields
+      });;
     } else {
       // Non-admins (teachers, students) see only non-masked subjects
       subjects = await Subject.find({ masked: false });
@@ -34,9 +106,18 @@ exports.getAllSubjects = async (req, res) => {
 // Get a specific subject by ID
 exports.getSubjectById = async (req, res) => {
   try {
-    const subject = await Subject.findById(req.params.id);
-    if (!subject) {
+    const subject = await Subject.findById(req.params.id).populate({
+        path: 'chapters', // Populate chapters
+        populate: {
+          path: 'sections', // Nested populate sections inside chapters
+        },
+      });
+    if (!subject ) {
       return res.status(404).json({ message: 'Subject not found' });
+
+    }else if (subject.archive){
+      return res.status(404).json({ message: 'Subject archived ' });
+
     }
     res.status(200).json(subject);
   } catch (error) {
@@ -45,24 +126,75 @@ exports.getSubjectById = async (req, res) => {
 };
 
 // Update a subject by ID
+
+
+
 exports.updateSubject = async (req, res) => {
   try {
-    const subject = await Subject.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    // Step 1: Find the existing subject
+    const subject = await Subject.findById(req.params.id);
     if (!subject) {
       return res.status(404).json({ message: 'Subject not found' });
     }
-    res.status(200).json(subject);
+
+    // Step 2: Check if the subject is archived
+    if (subject.archive) {
+      return res.status(404).json({ message: 'Subject is archived' });
+    }
+
+    // Step 3: Create a history entry for the current subject state before the update
+    // Clone the entire subject object (including chapters, sections, competences, etc.)
+    const subjectHistory = new SubjectHistory({
+      subjectId: subject._id,
+      title: subject.title,
+      description: subject.description,
+      nb_hour: subject.nb_hour,
+      semester: subject.semester,
+      level: subject.level,
+      archived: subject.archive,
+      archivedAt: subject.archivedAt, // If archived, we store this as well
+      competences: subject.competences,  // Store all related competences
+      chapters: subject.chapters,  // Store all related chapters
+      sections: subject.sections,  // Store all related sections
+      evaluation: subject.evaluation,  // Store evaluation data
+      advancement: subject.advancement,  // Store advancement data
+      version: subject.version || 1,  // Get the current version, default to 1 if not set
+    });
+
+    // Save the history record
+    await subjectHistory.save();
+
+    // Step 4: Update the subject with the new data from the request body
+    const updatedSubject = await Subject.findByIdAndUpdate(
+      req.params.id,
+      { ...req.body, version: (subject.version || 0) + 1 }, // Increment the version for the new subject
+      { new: true } // Return the updated subject
+    );
+
+    // Step 5: Return the updated subject
+    res.status(200).json(updatedSubject);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
 
+
 // Delete a subject by ID
 exports.deleteSubject = async (req, res) => {
   try {
-    const subject = await Subject.findByIdAndDelete(req.params.id);
+    const subject = await Subject.findById(req.params.id);
     if (!subject) {
       return res.status(404).json({ message: 'Subject not found' });
+    }else if (subject.archive){
+      return res.status(404).json({ message: 'Subject already archived ' });
+
+    }else if (!subject.used){
+      await subject.deleteOne();
+      return res.status(200).json({ message: 'Subject deleted successfully' });
+    }else {
+      subject.archive = true;
+      await subject.save();
+      return res.status(200).json({ message: 'Subject archived successfully' }); 
     }
     res.status(204).send();
   } catch (error) {
@@ -132,6 +264,232 @@ exports.toggleSubjectVisibilityByAdmin = async (req, res) => {
     }
 
     res.status(200).json(subject);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getSubjectWithHistory = async (req, res) => {
+  try {
+    // Retrieve the subject by its ID
+    const subject = await Subject.findById(req.params.id);
+    if (!subject) {
+      return res.status(404).json({ message: 'Subject not found' });
+    }
+
+    // Retrieve the history for the subject based on the subject ID
+    const subjectHistory = await SubjectHistory.find({ subjectId: subject._id })
+      .sort({ createdAt: -1 }) // Sort the history by creation date, latest first
+      .exec();
+
+    // Return the subject along with its history
+    res.status(200).json({
+      subject: subject,
+      history: subjectHistory,
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+exports.getAllModifications = async (req, res) => {
+  try {
+    console.log("Fetching all modifications...");
+    
+    // Fetch all modifications from the SubjectModification collection
+    const modifications = await SubjectModification.find()
+      .populate('id_user', 'name email') // Populate user details (e.g., name and email) if needed
+      .exec();
+
+    // Return the fetched modifications
+    res.status(200).json(modifications);
+  } catch (error) {
+    console.error("Error fetching modifications:", error.message);
+    res.status(500).json({ error: "Failed to fetch modifications. Please try again." });
+  }
+};
+
+exports.approveModification = async (req, res) => {
+  console.log("heelooo");
+  try {
+    const modificationId = req.params.id;
+
+    // Find the modification
+    const modification = await SubjectModification.findById(modificationId).populate('id_user');
+    if (!modification) {
+      return res.status(404).json({ message: 'Modification not found' });
+    }
+
+    // Find the subject to update
+    const subject = await Subject.findById(modification.id_Subject);
+    if (!subject) {
+      return res.status(404).json({ message: 'Subject not found' });
+    }
+
+    // Archive the current version in SubjectHistory
+    const subjectHistory = new SubjectHistory({
+      subjectId: subject._id,
+      title: subject.title,
+      description: subject.description,
+      nb_hour: subject.nb_hour,
+      semester: subject.semester,
+      level: subject.level,
+      archived: subject.archive,
+      archivedAt: subject.archivedAt,
+      competences: subject.competences,
+      chapters: subject.chapters,
+      sections: subject.sections,
+      evaluation: subject.evaluation,
+      advancement: subject.advancement,
+      version: (subject.version || 1), // Default to 1 if not set
+    });
+    await subjectHistory.save();
+
+    // Prepare the update data by excluding _id
+    const { _id, ...updatedSubjectData } = modification.subject.toObject();
+
+    // Update the subject with the proposed changes
+    await Subject.findByIdAndUpdate(subject._id, updatedSubjectData, { new: true });
+
+    // Mark the modification as validated
+    modification.validated = true;
+    await modification.save();
+
+    // Notify the user who proposed the modification
+    await sendEmail({
+      to: modification.id_user.email,
+      subject:'Modification Approved',
+      text:`Your proposed modification to the subject "${subject.title}" has been approved.`,
+      html: `<p>Your proposed modification to the subject "${subject.title}" has been approved.</p>`,
+    });
+
+    res.status(200).json({ message: 'Modification approved and subject updated successfully.' });
+  } catch (error) {
+    console.error("Error approving modification:", error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+
+exports.addModification = async (req, res) => {
+  try {
+    const { id_Subject, id_user, raison, proposedChanges } = req.body;
+
+    // Validate the subject exists
+    const subject = await Subject.findById(id_Subject);
+    if (!subject) {
+      return res.status(404).json({ message: 'Subject not found' });
+    }
+
+    // Check if there's already a pending modification for the subject
+    const existingModification = await SubjectModification.findOne({ id_Subject, validated: false });
+    if (existingModification) {
+      return res.status(400).json({ message: 'A pending modification already exists for this subject.' });
+    }
+
+    // Create a new modification entry
+    const modification = new SubjectModification({
+      id_Subject,
+      id_user,
+      raison,
+      subject: proposedChanges, // Proposed changes to the subject
+    });
+
+    await modification.save();
+
+    res.status(201).json({
+      message: 'Modification request has been created successfully.',
+      modification,
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+exports.updateChapterInSubject = async (req, res) => {
+  try {
+    const { subjectId } = req.params; // Get subject ID from the route parameters
+    const { chapterId, status, date } = req.body; // Get chapter data from the request body
+
+    // Find the subject by ID and populate its chapters
+    const subject = await Subject.findById(subjectId).populate('chapters').populate('evaluation');
+    if (!subject) {
+      return res.status(404).json({ message: 'Subject not found' });
+    }
+    // Check if the chapter exists in the subject's chapters
+    const chapter = subject.chapters.find(
+      (chapter) => chapter._id.toString() === chapterId
+    );
+
+    if (!chapter) {
+      return res.status(404).json({ message: 'Chapter not associated with the subject' });
+    }
+
+    // Update the chapter's status and date
+    chapter.status = status || 'terminated';
+    chapter.date = date || new Date();
+
+    const updatedChapter = await chapter.save(); // Save the updated chapter
+
+    // Calculate the percentage of terminated chapters
+    const totalChapters = subject.chapters.length;
+    const terminatedChapters = subject.chapters.filter(
+      (chapter) => chapter.status === 'terminated'
+    ).length;
+
+    const advancementPercentage = Math.round((terminatedChapters / totalChapters) * 100);
+
+    // Update the advancement field in the subject
+    subject.advancement = `${advancementPercentage}%`;
+    await Subject.updateOne(
+      { _id: subjectId },
+      { $set: { advancement: `${advancementPercentage}%` } }
+    );
+
+    // Find users to notify (admin and students associated with the subject)
+    const usersToNotify = await User.find({
+      $or: [
+        { role: 'admin' },
+        { role: 'student', subjects: subjectId }
+      ]
+    });
+
+    // Extract emails of the users to notify
+    const emails = usersToNotify.map(user => user.email);
+
+    // Compose the email content in French
+    const emailSubject = 'Mise à jour du chapitre';
+    const emailText = `Bonjour,
+
+          Nous vous informons que le chapitre "${updatedChapter.title}" du sujet "${subject.title}" a été mis à jour. 
+
+          L'avancement de ce sujet est maintenant de ${subject.advancement}. 
+
+          Merci de votre attention.
+
+          Cordialement,
+          L'équipe pédagogique`;
+
+    const emailHtml = `<p>Bonjour,</p>
+                      <p>Nous vous informons que le chapitre "<strong>${updatedChapter.title}</strong>" du sujet "<strong>${subject.title}</strong>" a été mis à jour.</p>
+                      <p>L'avancement de ce sujet est maintenant de <strong>${subject.advancement}</strong>.</p>
+                      <p>Merci de votre attention.</p>
+                      <p>Cordialement,</p>
+                      <p>L'équipe pédagogique</p>`;
+
+    // Send the email (ensure sendEmail function is defined)
+    await sendEmail({
+      to: emails.join(', '), // Send to multiple recipients
+      subject: emailSubject,
+      text: emailText,
+      html: emailHtml
+    });
+
+    res.status(200).json({
+      message: 'Chapter updated successfully',
+      chapter: updatedChapter,
+      advancement: subject.advancement, // Include updated advancement in the response
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
