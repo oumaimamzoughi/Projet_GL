@@ -13,9 +13,11 @@ const chapterRoutes = require('./routes/ChapterRoutes');
 const sectionRoutes = require('./routes/SectionRoutes');
 const periodRoutes = require('./routes/PeriodRouter');
 const PFARoutes = require('./routes/PFA');
+const DefenseRoutes= require ('./routes/Defense');
 const internshipRoutes=require('./routes/internshipRouter');
 const Authrouter = require('./routes/auth');
 const teacherRoutes = require('./routes/teacherRoutes');
+const ChoisePFa = require('./routes/ChoisePFa');
 const cors = require('cors');
 
 
@@ -68,8 +70,10 @@ app.use('/api/sections', sectionRoutes);
 app.use("/api/auth", Authrouter);
 app.use('/api/Period', periodRoutes);
 app.use('/api/PFA', PFARoutes);
+app.use('/api/defenses',DefenseRoutes);
 app.use('/api/internship',internshipRoutes)
 app.use('/api/teachers',teacherRoutes)
+app.use('/api/choice',ChoisePFa)
 
 
 server.listen(PORT, () => {

@@ -1,15 +1,72 @@
 const Subject = require('../models/Subject.model');
 const User = require('../models/User.model');
+const Chapter = require('../models/Chapter.model')
+const Section= require('../models/Section.model');
+const Competence = require('../models/Competence.model')
 // Create a new subject
 exports.createSubject = async (req, res) => {
   try {
+    // Step 1: Create a new subject
     const newSubject = new Subject(req.body);
+
+    // Step 2: Create chapters and associate them with the subject
+    const chapters = req.body.chapters || []; // Get chapters data from the request body
+
+    if (chapters.length > 0) {
+      const createdChapters = await Promise.all(chapters.map(async (chapter) => {
+        if (chapter._id) {
+          // If the chapter has an _id, it's an existing chapter, so we only need to update it with sections
+          const existingChapter = await Chapter.findById(chapter._id);
+          if (chapter.sections && chapter.sections.length > 0) {
+            // Create sections within the existing chapter
+            const createdSections = await Section.insertMany(chapter.sections);
+            existingChapter.sections = createdSections.map(section => section._id); // Assign created section ids to the chapter
+          }
+          return existingChapter; // Return the existing chapter with its updated sections
+        } else {
+          // If the chapter doesn't have an _id, create a new chapter
+          const newChapter = new Chapter(chapter);
+          if (chapter.sections && chapter.sections.length > 0) {
+            // Create sections within the new chapter
+            const createdSections = await Section.insertMany(chapter.sections);
+            newChapter.sections = createdSections.map(section => section._id); // Assign created section ids to the chapter
+          }
+          return newChapter.save(); // Save the new chapter and return it
+        }
+      }));
+
+      if (req.body.competences && req.body.competences.length > 0) {
+        console.log("hello")
+        const competenceIds = await Promise.all(req.body.competences.map(async (competence) => {
+          if (competence._id) {
+            console.log("heeloo")
+            // If competence has _id, it's an existing competence, so just use the _id
+            return competence._id;
+          } else {
+            // If competence doesn't have _id, create a new competence
+            const newCompetence = new Competence(competence);
+            const savedCompetence = await newCompetence.save();
+            return savedCompetence._id;
+          }
+        }));
+  
+        newSubject.competences = competenceIds; // Assign competence ids to the subject
+      }
+
+      newSubject.chapters = createdChapters.map(chapter => chapter._id); // Assign created chapter ids to the subject
+    }
+
+    // Step 3: Save the subject with the associated chapters and sections
     await newSubject.save();
+
+    // Step 4: Return the created subject along with its chapters and sections
     res.status(201).json(newSubject);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
+
+
 
 // Get all subjects
 exports.getAllSubjects = async (req, res) => {
@@ -20,11 +77,20 @@ exports.getAllSubjects = async (req, res) => {
     if (isAdmin  || true) {
       // Admin can see all subjects
       subjects = await Subject.find({ archive: false }).populate({
-        path: 'chapters', // Populate chapters
+        path: 'chapters', // Populate the 'chapters' field
         populate: {
-          path: 'sections', // Nested populate sections inside chapters
-        },
-      });
+          path: 'sections', // Nested populate to get 'sections' inside chapters
+          select: 'name' // Optionally select the fields to be populated
+        }
+      })
+      .populate({
+        path: 'competences', // Populate competences
+        select: 'title force' // Optionally select the fields to be populated
+      })
+      .populate({
+        path: 'evaluation', // Populate the evaluation field
+        select: 'id_evaluation message' // Select the evaluation fields
+      });;
     } else {
       // Non-admins (teachers, students) see only non-masked subjects
       subjects = await Subject.find({ masked: false });
