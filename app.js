@@ -18,7 +18,9 @@ const internshipRoutes=require('./routes/internshipRouter');
 const Authrouter = require('./routes/auth');
 const teacherRoutes = require('./routes/teacherRoutes');
 const ChoisePFa = require('./routes/ChoisePFa');
+const evaluationRoutes = require('./routes/evaluationRoutes');
 const cors = require('cors');
+const { scheduleNotifications } = require('./services/scheduler');
 
 
 // Middleware to parse JSON request bodies
@@ -74,7 +76,9 @@ app.use('/api/defenses',DefenseRoutes);
 app.use('/api/internship',internshipRoutes)
 app.use('/api/teachers',teacherRoutes)
 app.use('/api/choice',ChoisePFa)
+app.use('/api/evaluations', evaluationRoutes);
 
+scheduleNotifications();
 
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

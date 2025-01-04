@@ -1,9 +1,16 @@
 const mongoose = require('mongoose');
 
-
 const evaluationSchema = new mongoose.Schema({
-  id_evaluation: String,
-  message: String,       
+  id_sender: { type: String, required: true },   
+  message: { type: String, required: true },       
+  subjectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Subject', required: true }, 
+  teachers: [
+    { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: 'Teacher', 
+      required: true 
+    }
+  ],
 });
 
 const Evaluation = mongoose.model('Evaluation', evaluationSchema);
