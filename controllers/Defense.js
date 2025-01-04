@@ -3,6 +3,7 @@ const PFA = require('../models/PFA.mode');
 const User = require('../models/User.model');
 const { sendEmail } = require("../services/emailService");
 const mongoose = require("mongoose");
+const Mail = require("../models/email.model");
 
 
 exports.createDefenses = async (req, res) => {
@@ -16,16 +17,14 @@ exports.createDefenses = async (req, res) => {
 
     console.log('Données reçues:', { dates, rooms, startTime, endTime });
 
-    const soutenanceDuration = 30; // Durée de chaque soutenance en minutes
-    const maxDefensesPerDay = 6; // Limite quotidienne des soutenances
+    const soutenanceDuration = 30;
+    const maxDefensesPerDay = 6; 
 
     // Récupérer les PFA affectés
     const pfas = await PFA.find({ state: 'affecté' });
     if (!pfas.length) {
       return res.status(400).json({ message: 'Aucun PFA affecté' });
     }
-
-    console.log('PFA trouvés:', pfas);
 
     const defenses = []; // Tableau des soutenances
     let currentDateIndex = 0; // Index de la date actuelle
@@ -118,7 +117,6 @@ const getRapporteur = async (teacherId) => {
 
     if (rapporteurs.length) {
       const randomRapporteur = rapporteurs[Math.floor(Math.random() * rapporteurs.length)];
-      console.log('Rapporteur choisi:', randomRapporteur);
       return randomRapporteur._id;
     }
 
@@ -136,9 +134,9 @@ exports.getAllDefenses = async (req, res) => {
   try {
     // Récupérer toutes les soutenances
     const defenses = await Defense.find()
-      .populate('pfa', 'title student') // Remplacer les IDs par les données des PFA (si besoin)
-      .populate('teacher', 'firstName lastName') // Remplacer les IDs des enseignants par leurs noms
-      .populate('rapporteur', 'firstName lastName') // Idem pour les rapporteurs
+      .populate('pfa', 'title student') 
+      .populate('teacher', 'firstName lastName') 
+      .populate('rapporteur', 'firstName lastName') 
       .exec();
 
     // Vérifier si des soutenances existent
@@ -216,7 +214,7 @@ exports.updateDefense = async (req, res) => {
 // Méthode pour publier ou masquer toutes les soutenances
 exports.publishDefenses = async (req, res) => {
   try {
-    const { response } = req.params; // Récupérer le paramètre response (true ou false)
+    const { response } = req.params;
 
     // Validation du paramètre response
     if (response !== 'true' && response !== 'false') {
@@ -228,7 +226,6 @@ exports.publishDefenses = async (req, res) => {
     // Convertir response en booléen
     const isPublished = response === 'true';
 
-    // Mettre à jour toutes les soutenances
     const updatedDefenses = await Defense.updateMany(
       {}, // Filtre vide pour cibler toutes les soutenances
       { published: isPublished }, // Mise à jour du champ published
@@ -260,18 +257,27 @@ exports.publishDefenses = async (req, res) => {
 
 //emailing
 exports.sendDefensesList = async (req, res) => {
-  const { isModified } = req.body; // Booléen indiquant si la liste est modifiée
-  const recipients = ['fitourions@gmail.com', 'oumaimahrnii@gmail.com']; // Liste des destinataires
-  const subject = isModified 
-      ? 'Liste des soutenances mise à jour' 
-      : 'Première liste des soutenances PFA publiés';
-  //const baseUrl = 'https://votre-plateforme.com/PFA'; // URL de la liste
-  const message = isModified 
-      ? `La liste des soutenances PFA a été modifiée. Consultez le nouveaux planning ici : `
-      : `Voici la liste des soutenances PFA publiés : `;
+  
+  const recipients = ['fitourions@gmail.com', 'oumaimahrnii@gmail.com']; 
 
   try {
-      // Récupérer les PFA publiés
+        // Récupérer la configuration d'envoi
+        let mailConfig = await Mail.findOne();
+    
+        // Si la configuration n'existe pas, la créer
+        if (!mailConfig) {
+          mailConfig = new Mail();
+          await mailConfig.save();
+        }
+    
+        const isModified = mailConfig.isModified;
+        const subject = isModified
+          ? "Liste des sujets PFA mise à jour"
+          : "Première liste des sujets PFE publiés";
+        const message = isModified
+          ? "La liste des sujets PFE a été modifiée. Consultez les nouveaux sujets ici."
+          : "Voici la liste des sujets PFE publiés.";
+      // Récupérer les Soutenances publiés
       const publishedDefenses = await Defense.find({ published: true });
       if (publishedDefenses.length === 0) {
           return res.status(404).json({ message: 'Aucune soutenance publiée à envoyer.' });
@@ -281,19 +287,18 @@ exports.sendDefensesList = async (req, res) => {
       for (const recipient of recipients) {
         console.log(`Envoi à : ${recipient}`);
         await sendEmail({
-            to: recipient, // Destinataire
-            subject, // Objet
-            text: message, // Message brut
-            html: `<p>${message}</p>`, // Message HTML
+            to: recipient, 
+            subject, 
+            text: message, 
+            html: `<p>${message}</p>`, 
         });
       }
-
-      // Mettre à jour les états d'envoi
-      const now = new Date();
-      await PFA.updateMany(
-          { status: 'publié' }, 
-          { $set: { isSent: true, lastSentDate: now } }
-      );
+    // Mettre à jour la configuration d'envoi
+    const now = new Date();
+    mailConfig.isModified = true; // À partir de la deuxième fois, la liste est marquée comme modifiée
+    mailConfig.lastSentDate = now;
+    await mailConfig.save();
+     
 
       res.status(200).json({ message: 'Liste des soutenances PFA envoyée avec succès.', sentAt: now });
   } catch (error) {
@@ -318,9 +323,9 @@ exports.getTeacherDefenses = async (req, res) => {
         { rapporteur: teacherId }
       ]
     })
-      .populate("pfa", "title description") // Inclure les détails du sujet
-      .populate("room", "name") // Nom de la salle
-      .select("date time"); // Inclure uniquement la date et l'heure
+      .populate("pfa", "title description") 
+      .populate("room", "name") 
+      .select("date time"); 
 
     if (!defenses.length) {
       return res.status(404).json({

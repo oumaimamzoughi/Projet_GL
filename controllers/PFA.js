@@ -3,6 +3,7 @@ const Period = require("../models/Period.model");
 const SubjectChoice = require("../models/SubjectChoice.model")
 const User = require("../models/User.model")
 const { sendEmail } = require("../services/emailService");
+const Mail = require("../models/email.model");
 
 
 // Create a new PFA
@@ -278,17 +279,26 @@ exports.publishPFA = async (req, res) => {
 
 //emailing
 exports.sendPFAList = async (req, res) => {
-    const { isModified } = req.body; // Booléen indiquant si la liste est modifiée
+    
     const recipients = ['fitourions@gmail.com', 'oumaimahrnii@gmail.com']; // Liste des destinataires
-    const subject = isModified 
-        ? 'Liste des sujets PFA mise à jour' 
-        : 'Première liste des sujets PFA publiés';
-    //const baseUrl = 'https://votre-plateforme.com/PFA'; // URL de la liste
-    const message = isModified 
-        ? `La liste des sujets PFA a été modifiée. Consultez les nouveaux sujets ici : `
-        : `Voici la liste des sujets PFA publiés : `;
-
     try {
+      // Récupérer la configuration d'envoi
+          let mailConfig = await Mail.findOne();
+      
+          // Si la configuration n'existe pas, la créer
+          if (!mailConfig) {
+            mailConfig = new Mail();
+            await mailConfig.save();
+          }
+      
+          const isModified = mailConfig.isModified;
+          const subject = isModified
+            ? "Liste des sujets PFA mise à jour"
+            : "Première liste des sujets PFE publiés";
+          const message = isModified
+            ? "La liste des sujets PFE a été modifiée. Consultez les nouveaux sujets ici."
+            : "Voici la liste des sujets PFE publiés.";
+      
         // Récupérer les PFA publiés
         const publishedPFAs = await PFA.find({ status: 'publié' });
         if (publishedPFAs.length === 0) {
