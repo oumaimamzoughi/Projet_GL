@@ -2,13 +2,16 @@ const mongoose = require('mongoose');
 const Subject = require('./Subject.model');
 const { string } = require('joi');
 
-// Define the Subject schema
 const subjectModificationSchema = new mongoose.Schema({
-
   id_Subject: {
-    type: Number, 
+    type: String, 
     required: true,
-  }, 
+  },
+  id_user: {
+    type: mongoose.Schema.Types.ObjectId, // Reference to the User model
+    required: true,
+    ref: 'User',
+  },
   raison: {
     type: String,
     required: true,
@@ -18,13 +21,16 @@ const subjectModificationSchema = new mongoose.Schema({
     type: Subject.schema, 
     required: false,
   },
-  validated:{
+  validated: {
     type: Boolean,
-    default:false,
+    default: false,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
 });
 
-// Create the Subject model
 const SubjectModification = mongoose.model('SubjectModification', subjectModificationSchema);
 
 module.exports = SubjectModification;

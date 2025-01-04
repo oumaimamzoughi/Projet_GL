@@ -8,7 +8,6 @@ const { string } = require('joi');
 const subjectSchema = new mongoose.Schema({
   id_Subject: {
     type: Number, 
-    required: true,
     unique: true,
   },
   title: {
@@ -39,12 +38,10 @@ const subjectSchema = new mongoose.Schema({
   },
   semester: {
     type: String, 
-    required: true,
     trim: true,
   },
   level: {
     type: String, 
-    required: true,
     trim: true,
   },
   chapters: [
