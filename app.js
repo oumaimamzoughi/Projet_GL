@@ -2,8 +2,10 @@ const express = require('express');
 const http = require('http');
 const mongoose = require('mongoose');
 const socketIo = require('socket.io');
+const notifyRetardCronJob =require('./utils/notifyRetardCronJob')
+const mettingCronJob=require('./utils/mettingCronJob')
 require('dotenv').config();
-
+const setupSwagger = require('./swaggerDocs');
 // Import your Express app
 const app = express();
 const userRoutes = require('./routes/UserRouter');
@@ -78,6 +80,11 @@ app.use('/api/teachers',teacherRoutes)
 app.use('/api/choice',ChoisePFa)
 app.use('/api/evaluations', evaluationRoutes);
 
+setupSwagger(app);
+
+// notifyRetardCronJob();
+
+// mettingCronJob();
 scheduleNotifications();
 
 server.listen(PORT, () => {

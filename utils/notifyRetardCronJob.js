@@ -1,15 +1,17 @@
 const cron = require('node-cron');
-const sendEmail = require('../utils/emailService');
+const sendEmail = require('../services/emailService');
 const User = require('../models/User.model');
 const Internship = require('../models/Internship.model');
-const InternshipPeriod = require('../models/InternshipPeriod.model'); // Assuming you have this
+const Period = require('../models/Period.model');
 
 
 const notifyRetardCronJob = async () => {
   try {
     
+    console.log("hello world");
+    
     const currentDate = new Date();
-    const openPeriods = await InternshipPeriod.find({
+    const openPeriods = await Period.find({
       startDate: { $lte: currentDate },
       endDate: { $gte: currentDate },
     });
@@ -61,6 +63,6 @@ const notifyRetardCronJob = async () => {
 };
 
 // Schedule the Cron Job to run daily at 8 AM
-cron.schedule('0 0 * * *', notifyRetardCronJob);
+//cron.schedule('* * * * *', notifyRetardCronJob);
 
 module.exports = notifyRetardCronJob;
