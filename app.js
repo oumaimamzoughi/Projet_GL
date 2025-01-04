@@ -2,8 +2,10 @@ const express = require('express');
 const http = require('http');
 const mongoose = require('mongoose');
 const socketIo = require('socket.io');
+const notifyRetardCronJob =require('./utils/notifyRetardCronJob')
+const mettingCronJob=require('./utils/mettingCronJob')
 require('dotenv').config();
-
+const setupSwagger = require('./swaggerDocs');
 // Import your Express app
 const app = express();
 const userRoutes = require('./routes/UserRouter');
@@ -65,6 +67,11 @@ app.use('/api/PFA', PFARoutes);
 app.use('/api/internship',internshipRoutes)
 app.use('/api/teachers',teacherRoutes)
 
+setupSwagger(app);
+
+// notifyRetardCronJob();
+
+// mettingCronJob();
 
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
