@@ -79,3 +79,12 @@ exports.getAnonymousEvaluations = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+exports.getAllEvaluations = async (req, res) => {
+  try {
+    const evaluations = await Evaluation.find().select('message createdAt');
+    res.status(200).json(evaluations);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
