@@ -13,11 +13,15 @@ exports.addInternship = async (req, res) => {
 
     console.log("Request body:", req.body); // Check if title is passed
 
+    console.log(req.body);
+    
     if (!title) {
       return res.status(400).json({ message: "Title is required." });
     }
 
     const userId = "6752c59a346b414452d45ba3"; // Example userId (replace as needed)
+    const userId = "6752c59a346b414452d45ba3";//req.user.id 
+ 
     const user = await User.findById(userId);
 
     if (!user) {

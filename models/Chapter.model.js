@@ -1,24 +1,29 @@
 const mongoose = require('mongoose');
 const Section = require('./Section.model');
+const { date } = require('joi');
 
 // Define the Chapter schema
 const chapterSchema = new mongoose.Schema({
-  id_chapter: {
-    type: Number, // Integer for the chapter ID
-    required: true,
-    unique: true,
-  },
   name: {
     type: String, // Name of the chapter
-    required: true,
+    required: false,
     trim: true,
   },
   status: {
     type: String, // Status of the chapter (e.g., "draft", "published")
-    required: true,
+    required: false,
     trim: true,
   },
-  sections: [Section.schema]
+  date: {
+    type: Date,
+    required: false,
+  },
+  sections: [
+    {
+          type: mongoose.Schema.Types.ObjectId, 
+          ref: 'Section'
+    }
+  ],
 });
 
 // Create the Chapter model
