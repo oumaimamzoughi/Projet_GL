@@ -599,7 +599,6 @@ exports.assignPFAManually = async (req, res) => {
 //     });
 //   }
 // };
-
 exports.assignPFAWithForce = async (req, res) => {
   try {
     const { studentId, partnerId, teacherId, subjectId, force } = req.body;
@@ -611,49 +610,40 @@ exports.assignPFAWithForce = async (req, res) => {
     });
 
     if (force && existingPFA) {
-      // Si force est activé, on annule l'affectation existante et réaffecte l'étudiant
-
-      // Annuler l'affectation du sujet actuel de l'étudiant
+      // Si 'force' est activé et qu'un sujet existe déjà
       const oldSubject = existingPFA;
+
+      // Annuler l'affectation actuelle
       await PFA.findByIdAndUpdate(
         oldSubject._id,
-        {
-          state: "non affecté",
-          student: null,
-          partner_id: null,
-        },
+        { state: "non affecté", student: null, partner_id: null },
         { new: true }
       );
 
-      // Vérifier si le sujet sélectionné est déjà affecté
-      let newSubject = await PFA.findById(subjectId);
+      // Vérifier si le sujet sélectionné est valide
+      const newSubject = await PFA.findById(subjectId);
       if (!newSubject) {
-        return res.status(404).json({
-          error: "Le sujet spécifié n'existe pas.",
-        });
+        return res.status(404).json({ error: "Le sujet spécifié n'existe pas." });
       }
 
-      // Si le sujet est déjà affecté, on le réaffecte à un autre étudiant et partenaire
       if (newSubject.state === "affecté") {
-        // Récupérer les informations de l'ancien étudiant et partenaire du sujet
+        // Gestion du réaffectement si le nouveau sujet est déjà affecté
         const oldStudent = newSubject.student;
         const oldPartner = newSubject.partner_id;
 
-        // Trouver des sujets disponibles pour réaffecter l'ancien étudiant et partenaire
+        // Rechercher un sujet disponible
         const availableSubjects = await PFA.find({
-          student: { $nin: [oldStudent, oldPartner] },
           state: "non affecté",
-        }).populate("teacher", "firstName lastName");
+        }).sort({ priority: 1 });
 
-        // Trier les sujets disponibles par priorité (en supposant que chaque sujet a un champ 'priority')
-        const sortedSubjects = availableSubjects.sort(
-          (a, b) => a.priority - b.priority
-        );
+        if (!availableSubjects.length) {
+          return res.status(400).json({
+            error: "Aucun sujet disponible pour réaffecter l'ancien étudiant.",
+          });
+        }
 
-        // Choisir le premier sujet disponible pour réaffecter l'ancien étudiant et partenaire
-        const newAssignedSubject = sortedSubjects[0];
-
-        // Réaffecter l'ancien étudiant et partenaire à ce nouveau sujet
+        // Affecter l'ancien étudiant et partenaire à un nouveau sujet
+        const newAssignedSubject = availableSubjects[0];
         await PFA.findByIdAndUpdate(
           newAssignedSubject._id,
           {
@@ -665,84 +655,15 @@ exports.assignPFAWithForce = async (req, res) => {
           { new: true }
         );
 
-        // Mettre à jour l'état du sujet actuel comme non affecté
+        // Libérer l'ancien sujet
         await PFA.findByIdAndUpdate(
           newSubject._id,
-          {
-            state: "non affecté",
-            student: null,
-            partner_id: null,
-          },
+          { state: "non affecté", student: null, partner_id: null },
           { new: true }
         );
-
-        // Préparer le message pour l'ancien étudiant et son partenaire
-        const result = {
-          oldStudent: {
-            studentId: oldStudent,
-            subjectAssigned: newAssignedSubject.title,
-            message: `L'étudiant ${oldStudent} et son partenaire ${oldPartner} ont été réaffectés au sujet ${newAssignedSubject.title}.`,
-          },
-        };
-
-        // Réaffecter le sujet choisi au nouvel étudiant et partenaire
-        const updatedPFA = await PFA.findByIdAndUpdate(
-          newSubject._id,
-          {
-            student: studentId,
-            partner_id: partnerId || null,
-            teacher: teacherId,
-            state: "affecté",
-          },
-          { new: true }
-        );
-
-        result.newStudent = {
-          studentId: studentId,
-          partnerId: partnerId || "Aucun partenaire",
-          subjectAssigned: newSubject.title,
-          message: `L'étudiant ${studentId} et son partenaire ${
-            partnerId || "Aucun partenaire"
-          } ont été affectés au sujet ${newSubject.title}.`,
-        };
-
-        res.status(200).json({
-          message: "Réaffectation réussie.",
-          result,
-        });
-      } else {
-        // Si le sujet n'est pas encore affecté, on procède à une nouvelle affectation
-        await PFA.findByIdAndUpdate(
-          newSubject._id,
-          {
-            student: studentId,
-            partner_id: partnerId || null,
-            teacher: teacherId,
-            state: "affecté",
-          },
-          { new: true }
-        );
-
-        res.status(200).json({
-          message: "Affectation réussie.",
-          updatedPFA: newSubject,
-        });
-      }
-    } else if (existingPFA && !force) {
-      // Si l'étudiant est déjà affecté et force est false
-      return res.status(400).json({
-        error:
-          "Cet étudiant est déjà affecté à un autre sujet. Utilisez 'force' pour forcer l'affectation.",
-      });
-    } else {
-      // Si l'étudiant n'était pas affecté, on effectue une affectation normale
-      const newSubject = await PFA.findById(subjectId);
-      if (!newSubject) {
-        return res.status(404).json({
-          error: "Le sujet spécifié n'existe pas.",
-        });
       }
 
+      // Réaffecter le nouveau sujet à l'étudiant
       const updatedPFA = await PFA.findByIdAndUpdate(
         newSubject._id,
         {
@@ -754,11 +675,40 @@ exports.assignPFAWithForce = async (req, res) => {
         { new: true }
       );
 
-      res.status(200).json({
-        message: "Affectation réussie.",
+      return res.status(200).json({
+        message: "Réaffectation réussie.",
         updatedPFA,
       });
     }
+
+    if (existingPFA && !force) {
+      // Si l'étudiant est déjà affecté et 'force' est désactivé
+      return res.status(400).json({
+        error: "Cet étudiant est déjà affecté à un autre sujet. Utilisez 'force' pour forcer l'affectation.",
+      });
+    }
+
+    // Cas normal : Affecter un étudiant sans conflit
+    const newSubject = await PFA.findById(subjectId);
+    if (!newSubject) {
+      return res.status(404).json({ error: "Le sujet spécifié n'existe pas." });
+    }
+
+    const updatedPFA = await PFA.findByIdAndUpdate(
+      newSubject._id,
+      {
+        student: studentId,
+        partner_id: partnerId || null,
+        teacher: teacherId,
+        state: "affecté",
+      },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      message: "Affectation réussie.",
+      updatedPFA,
+    });
   } catch (error) {
     console.error("Erreur lors de l'affectation de l'étudiant:", error);
     res.status(500).json({
@@ -767,6 +717,7 @@ exports.assignPFAWithForce = async (req, res) => {
     });
   }
 };
+
 
 exports.getFinalPFEAssignments = async (req, res) => {
   try {
