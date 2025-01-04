@@ -1,60 +1,39 @@
 const Evaluation = require('../models/Evaluation.model');
+const Subject = require('../models/Subject.model');
 
-// Create a new evaluation
-exports.createEvaluation = async (req, res) => {
+exports.submitEvaluation = async (req, res) => {
+  const { studentId, subjectId, message } = req.body;
+
   try {
-    const newEvaluation = new Evaluation(req.body);
-    await newEvaluation.save();
-    res.status(201).json(newEvaluation);
+    const alreadyEvaluated = await Evaluation.findOne({ subject: subjectId, 'meta.studentId': studentId });
+    if (alreadyEvaluated) {
+      return res.status(400).json({ error: 'You have already submitted an evaluation for this subject.' });
+    }
+
+    const subject = await Subject.findById(subjectId).populate('teacher');
+    if (!subject) {
+      return res.status(404).json({ error: 'Subject not found' });
+    }
+
+    const evaluation = new Evaluation({
+      subject: subjectId,
+      teacher: subject.teacher._id,
+      message,
+    });
+
+    await evaluation.save();
+    res.status(201).json({ message: 'Evaluation submitted successfully' });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
-// Get all evaluations
-exports.getAllEvaluations = async (req, res) => {
+exports.getAnonymousEvaluations = async (req, res) => {
+  const { subjectId } = req.params;
+
   try {
-    const evaluations = await Evaluation.find();
+    const evaluations = await Evaluation.find({ subject: subjectId }).select('message createdAt');
     res.status(200).json(evaluations);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-// Get a specific evaluation by ID
-exports.getEvaluationById = async (req, res) => {
-  try {
-    const evaluation = await Evaluation.findById(req.params.id);
-    if (!evaluation) {
-      return res.status(404).json({ message: 'Evaluation not found' });
-    }
-    res.status(200).json(evaluation);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-// Update an evaluation by ID
-exports.updateEvaluation = async (req, res) => {
-  try {
-    const evaluation = await Evaluation.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!evaluation) {
-      return res.status(404).json({ message: 'Evaluation not found' });
-    }
-    res.status(200).json(evaluation);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};
-
-// Delete an evaluation by ID
-exports.deleteEvaluation = async (req, res) => {
-  try {
-    const evaluation = await Evaluation.findByIdAndDelete(req.params.id);
-    if (!evaluation) {
-      return res.status(404).json({ message: 'Evaluation not found' });
-    }
-    res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
