@@ -36,10 +36,8 @@ exports.createSubject = async (req, res) => {
       }));
 
       if (req.body.competences && req.body.competences.length > 0) {
-        console.log("hello")
         const competenceIds = await Promise.all(req.body.competences.map(async (competence) => {
           if (competence._id) {
-            console.log("heeloo")
             // If competence has _id, it's an existing competence, so just use the _id
             return competence._id;
           } else {
