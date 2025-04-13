@@ -3,9 +3,12 @@ const router = express.Router();
 const PFAController = require('../controllers/PFA');
 const middleAuth = require('../middleware/User');
 
+router.post("/pairwork",middleAuth.loggedMiddleware, middleAuth.isTeacher, PFAController.createPFAPairWork);
+router.post("/add",middleAuth.loggedMiddleware, middleAuth.isTeacher, PFAController.createPFA);
 router.get("/Teach",middleAuth.loggedMiddleware,middleAuth.isTeacher,PFAController.getTeachersPFAMinee);
 
-router.post("/add",middleAuth.loggedMiddleware, middleAuth.isTeacher, PFAController.createPFA)
+
+
 router.put("/update/:id" ,/*middleAuth.loggedMiddleware, middleAuth.isTeacher,*/PFAController.updatePFA)
 router.get("/Admin/:id" ,/*middleAuth.loggedMiddleware, middleAuth.isAdmin ,*/PFAController.getPFAByAdmin_Id)
 

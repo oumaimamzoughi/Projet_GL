@@ -19,8 +19,8 @@ exports.addInternship = async (req, res) => {
       return res.status(400).json({ message: "Title is required." });
     }
 
-    const userId = "6752c59a346b414452d45ba3"; // Example userId (replace as needed)
-    const userId = "6752c59a346b414452d45ba3";//req.user.id 
+    //const userId = "6752c59a346b414452d45ba3"; // Example userId (replace as needed)
+    //const userId = "6752c59a346b414452d45ba3";//req.user.id 
  
     const user = await User.findById(userId);
 

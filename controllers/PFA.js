@@ -4,8 +4,48 @@ const SubjectChoice = require("../models/SubjectChoice.model")
 const User = require("../models/User.model")
 const { sendEmail } = require("../services/emailService");
 const Mail = require("../models/email.model");
+const PFAFactory = require("../services/PFAFactory");
 
+// Create a new PFA
+// exports.createPFA = async (req, res) => {
+//   try {
+//     // Vérifier si une période de type 'teacher_submission' est ouverte
+//     const currentDate = new Date();
+//     const openPeriod = await Period.findOne({
+//       type: "teacher_submission",
+//       end_date: { $gt: currentDate }, // end_date > currentDate
+//     });
 
+//     if (!openPeriod) {
+//       return res
+//         .status(400)
+//         .json({ message: "No open period for teacher submissions." });
+//     }
+
+    
+//     // Si la période est ouverte et l'utilisateur est connecté, créer le PFA
+//     const { title, description, technologies, pair_work, cin_student } =
+//       req.body;
+
+//     const newPFA = new PFA({
+//       title,
+//       description,
+//       technologies,
+//       pair_work,
+//       cin_student,
+//       teacher: req.auth.userId,
+       
+//       //  // Ajout de l'ID de l'utilisateur connecté
+//     });
+   
+   
+//     // Sauvegarder le PFA dans la base de données
+//     await newPFA.save();
+//     res.status(201).json(newPFA);
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 // Create a new PFA
 exports.createPFA = async (req, res) => {
   try {
@@ -15,30 +55,47 @@ exports.createPFA = async (req, res) => {
       type: "teacher_submission",
       end_date: { $gt: currentDate }, // end_date > currentDate
     });
-
     if (!openPeriod) {
       return res
         .status(400)
         .json({ message: "No open period for teacher submissions." });
     }
 
-    
-    // Si la période est ouverte et l'utilisateur est connecté, créer le PFA
-    const { title, description, technologies, pair_work, cin_student } =
-      req.body;
-
-    const newPFA = new PFA({
-      title,
-      description,
-      technologies,
-      pair_work,
-      cin_student,
-      teacher: req.auth.userId,
-       
-      //  // Ajout de l'ID de l'utilisateur connecté
+    // Utiliser la factory pour créer le PFA
+    const newPFA = PFAFactory.createPFA({
+      ...req.body,
+      teacher: req.auth.userId, // ID de l'enseignant connecté
     });
-   
-   
+
+    // Sauvegarder le PFA dans la base de données
+    await newPFA.save();
+    res.status(201).json(newPFA);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+// Create a PFA with pair work
+exports.createPFAPairWork = async (req, res) => {
+  try {
+    // Vérifier si une période de type 'teacher_submission' est ouverte
+    const currentDate = new Date();
+    const openPeriod = await Period.findOne({
+      type: "teacher_submission",
+      end_date: { $gt: currentDate }, // end_date > currentDate
+    });
+    if (!openPeriod) {
+      return res
+        .status(400)
+        .json({ message: "No open period for teacher submissions." });
+    }
+
+    // Utiliser la factory pour créer un PFA avec binôme
+    const newPFA = PFAFactory.createPFAPairWork({
+      ...req.body,
+      teacher: req.auth.userId, // ID de l'enseignant connecté
+      partner_id: req.body.partnerId, // ID du binôme
+    });
+
     // Sauvegarder le PFA dans la base de données
     await newPFA.save();
     res.status(201).json(newPFA);
