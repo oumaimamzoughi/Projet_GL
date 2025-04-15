@@ -11,7 +11,9 @@ const upload = multer({
 
 
 const middleAuth = require("../middleware/User");
-const { openInternshipPeriod, getOpenInternshipPeriod, updateInternshipPeriod, assignTeachersToInternships, updateInternshipTeacher, sendPlanningEmail, getAssignedInternships, addInternship, getInternshipDetails, updateInternshipSchedule, fetchInternshipDetailsForConnectedUser, updateInternshipValidationStatus } = require("../controllers/Internship");
+const { addInternship } = require("../controllers/internshipController");
+
+const { openInternshipPeriod, getOpenInternshipPeriod, updateInternshipPeriod, assignTeachersToInternships, updateInternshipTeacher, sendPlanningEmail, getAssignedInternships,  getInternshipDetails, updateInternshipSchedule, fetchInternshipDetailsForConnectedUser } = require("../controllers/Internship");
 /**
  * @swagger
  * /{type}/open:
@@ -133,6 +135,7 @@ router.patch("/:type/open", updateInternshipPeriod);//works
  *       500:
  *         description: Internal server error
  */
+// emploie du pattern decorator ici
 router.post("/:type/post",upload, addInternship);//works 
 
 
