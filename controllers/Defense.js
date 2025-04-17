@@ -4,128 +4,29 @@ const User = require('../models/User.model');
 const { sendEmail } = require("../services/emailService");
 const mongoose = require("mongoose");
 const Mail = require("../models/email.model");
+const ScheduleDefenseService = require("../services/ScheduleDefenseService");
 
 
 exports.createDefenses = async (req, res) => {
   try {
     const { dates, rooms, startTime, endTime } = req.body;
-
-    // Validation des données
     if (!dates || !rooms || !startTime || !endTime) {
-      return res.status(400).json({ message: 'Données manquantes' });
+      return res.status(400).json({ message: "Données manquantes." });
     }
 
-    console.log('Données reçues:', { dates, rooms, startTime, endTime });
+    const defenses = await ScheduleDefenseService.scheduleDefenses(
+      dates,
+      rooms,
+      startTime,
+      endTime
+    );
 
-    const soutenanceDuration = 30;
-    const maxDefensesPerDay = 6; 
-
-    // Récupérer les PFA affectés
-    const pfas = await PFA.find({ state: 'affecté' });
-    if (!pfas.length) {
-      return res.status(400).json({ message: 'Aucun PFA affecté' });
-    }
-
-    const defenses = []; // Tableau des soutenances
-    let currentDateIndex = 0; // Index de la date actuelle
-    let currentRoomIndex = 0; // Index de la salle actuelle
-    let currentTime = new Date(`${dates[currentDateIndex]}T${startTime}`); // Heure de début initiale
-
-    for (let i = 0; i < pfas.length; i++) {
-      // Filtrer les soutenances planifiées pour le jour actuel
-      const currentDayDefenses = defenses.filter(
-        (defense) => defense.date === dates[currentDateIndex]
-      );
-
-      // Si la limite quotidienne est atteinte, passer à la date suivante
-      if (currentDayDefenses.length >= maxDefensesPerDay) {
-        currentDateIndex++;
-        currentRoomIndex = 0;
-
-        if (currentDateIndex >= dates.length) {
-          return res.status(400).json({
-            message: 'Pas assez de jours disponibles pour planifier toutes les soutenances.',
-          });
-        }
-
-        currentTime = new Date(`${dates[currentDateIndex]}T${startTime}`);
-      }
-
-      // Vérifier si l'heure dépasse l'heure de fin
-      const endTimeOfDay = new Date(`${dates[currentDateIndex]}T${endTime}`);
-      if (currentTime >= endTimeOfDay) {
-        currentDateIndex++;
-        currentRoomIndex = 0;
-
-        if (currentDateIndex >= dates.length) {
-          return res.status(400).json({
-            message: 'Pas assez de jours disponibles pour planifier toutes les soutenances.',
-          });
-        }
-
-        currentTime = new Date(`${dates[currentDateIndex]}T${startTime}`);
-      }
-
-      // Formater l'heure au format "HH:mm"
-      const formattedTime = `${String(currentTime.getHours()).padStart(2, '0')}:${String(
-        currentTime.getMinutes()
-      ).padStart(2, '0')}`;
-
-      // Ajouter une soutenance
-      const defense = {
-        pfa: pfas[i]._id,
-        date: dates[currentDateIndex],
-        time: formattedTime, // Heure seulement
-        room: rooms[currentRoomIndex],
-        teacher: pfas[i].teacher,
-        rapporteur: await getRapporteur(pfas[i].teacher), // Déterminer le rapporteur
-      };
-
-      defenses.push(defense);
-
-      // Avancer l'heure pour la prochaine soutenance
-      currentTime = new Date(currentTime.getTime() + soutenanceDuration * 60000);
-
-      // Passer à la salle suivante si disponible
-      currentRoomIndex = (currentRoomIndex + 1) % rooms.length;
-    }
-
-    console.log('Soutenances planifiées:', defenses);
-
-    // Insérer les soutenances dans la base de données
-    await Defense.insertMany(defenses);
-
-    return res.status(200).json({
-      message: 'Soutenances créées avec succès',
+    res.status(200).json({
+      message: "Soutenances créées avec succès.",
       defenses,
     });
   } catch (error) {
-    console.error('Erreur lors de la création des soutenances:', error);
-    return res.status(500).json({
-      message: 'Erreur interne du serveur',
-      error: error.message,
-    });
-  }
-};
-
-
-
-// Fonction pour récupérer un rapporteur aléatoire
-const getRapporteur = async (teacherId) => {
-  try {
-    const rapporteurs = await User.find({ role: 'teacher', _id: { $ne: teacherId } });
-
-    if (rapporteurs.length) {
-      const randomRapporteur = rapporteurs[Math.floor(Math.random() * rapporteurs.length)];
-      return randomRapporteur._id;
-    }
-
-    console.log('Aucun rapporteur trouvé');
-    return null;
-
-  } catch (error) {
-    console.error('Erreur lors de la récupération des rapporteurs:', error);
-    return null;
+    res.status(500).json({ error: error.message });
   }
 };
 
