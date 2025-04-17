@@ -9,41 +9,46 @@ const Mail = require("../models/email.model");
 // Create a new PFA
 exports.createPFA = async (req, res) => {
   try {
-    // Vérifier si une période de type 'teacher_submission' est ouverte
-    const currentDate = new Date();
-    const openPeriod = await Period.findOne({
-      type: "teacher_submission",
-      end_date: { $gt: currentDate }, // end_date > currentDate
-    });
+      // Vérifier si une période de type 'teacher_submission' est ouverte
+      const currentDate = new Date();
+      const openPeriod = await Period.findOne({
+          type: "teacher_submission",
+          end_date: { $gt: currentDate }, // end_date > currentDate
+      });
 
-    if (!openPeriod) {
-      return res
-        .status(400)
-        .json({ message: "No open period for teacher submissions." });
-    }
+      if (!openPeriod) {
+          return res.status(400).json({ message: "No open period for teacher submissions." });
+      }
 
-    
-    // Si la période est ouverte et l'utilisateur est connecté, créer le PFA
-    const { title, description, technologies, pair_work, cin_student } =
-      req.body;
+      // Si la période est ouverte et l'utilisateur est connecté, créer le PFA
+      const { title, description, technologies, pair_work, cin_student, partner_id } = req.body;
 
-    const newPFA = new PFA({
-      title,
-      description,
-      technologies,
-      pair_work,
-      cin_student,
-      teacher: req.auth.userId,
-       
-      //  // Ajout de l'ID de l'utilisateur connecté
-    });
-   
-   
-    // Sauvegarder le PFA dans la base de données
-    await newPFA.save();
-    res.status(201).json(newPFA);
+      // Vérification OCL : Si pair_work est true, partner_id doit être valide
+      if (pair_work) {
+          if (!partner_id) {
+              return res.status(400).json({ message: "When pair_work is true, partner_id must be provided." });
+          }
+          const partner = await User.findById(partner_id);
+          if (!partner || partner.role !== "student") {
+              return res.status(400).json({ message: "partner_id must reference an existing student." });
+          }
+      }
+
+      const newPFA = new PFA({
+          title,
+          description,
+          technologies,
+          pair_work,
+          partner_id, // Ajoutez partner_id ici
+          cin_student,
+          teacher: req.auth.userId,
+      });
+
+      // Sauvegarder le PFA dans la base de données
+      await newPFA.save();
+      res.status(201).json(newPFA);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+      res.status(500).json({ error: error.message });
   }
 };
 

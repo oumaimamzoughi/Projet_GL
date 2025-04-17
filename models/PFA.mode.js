@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const User = require("./User.model");
 
 // Define the PFA schema
 const pfaSchema = new mongoose.Schema({
@@ -20,9 +21,28 @@ const pfaSchema = new mongoose.Schema({
     default: false,
   },
   partner_id: {
-    type: mongoose.Schema.Types.ObjectId, // ID of the partner (if pair work)
-    default: null, // Default is null when no partner
-    ref: "User", // Reference to the User model (partner)
+    type: mongoose.Schema.Types.ObjectId,
+    default: null,
+    ref: "User",
+    validate: {
+        validator: async function (value) {
+            // Si pair_work est false, pas besoin de valider partner_id
+            if (!this.pair_work) {
+                return true;
+            }
+
+            // Si pair_work est true, partner_id ne doit pas être null
+            if (!value) {
+                return false;
+            }
+
+            // Vérifier que l'utilisateur référencé existe et a le rôle "student"
+            const user = await User.findById(value);
+            return user && user.role === "student";
+        },
+        message:
+            "When pair_work is true, partner_id must reference an existing student.",
+    },
   },
   status: {
     type: String, // Status of the PFA
