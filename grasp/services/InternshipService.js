@@ -1,6 +1,6 @@
-const Internship = require("../models/Internship.model");
-const User = require("../models/User.model");
-const { sendEmail } = require("../services/emailService");
+const Internship = require("../../models/Internship.model");
+const User = require("../../models/User.model");
+const { sendEmail } = require("../../services/emailService");
 
 class InternshipService {
   async addInternship(type, title, userId, documents) {
