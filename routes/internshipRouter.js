@@ -11,7 +11,9 @@ const upload = multer({
 
 
 const middleAuth = require("../middleware/User");
-const { openInternshipPeriod, getOpenInternshipPeriod, updateInternshipPeriod, assignTeachersToInternships, updateInternshipTeacher, sendPlanningEmail, getAssignedInternships, addInternship, getInternshipDetails, updateInternshipSchedule, fetchInternshipDetailsForConnectedUser, updateInternshipValidationStatus } = require("../controllers/Internship");
+const { assignTeachersToInternships, updateInternshipTeacher, sendPlanningEmail, getAssignedInternships, addInternship, getInternshipDetails, updateInternshipSchedule, fetchInternshipDetailsForConnectedUser, updateInternshipValidationStatus } = require("../grasp/controlleurs/InternshipController");
+const { openInternshipPeriod, getOpenInternshipPeriod, updateInternshipPeriod } = require("../grasp/controlleurs/PeriodController");
+
 /**
  * @swagger
  * /{type}/open:
