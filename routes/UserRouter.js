@@ -6,7 +6,7 @@ const{
     getUserById,
     updateUser,
     deleteUser,
-    
+    updateSubjectAdvancement,
 }= require('../controllers/User')
 
 // Route to create a new user
@@ -18,7 +18,8 @@ router.get('/', getAllUsers);
 // Route to get a specific user by ID
 router.get('/:id', getUserById);
 
-//update advancement for teacher 
+
+
 // Route to update a user by ID
 router.put('/:id', updateUser);
 
