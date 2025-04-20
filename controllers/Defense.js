@@ -112,99 +112,67 @@ exports.updateDefense = async (req, res) => {
   }
 };
 
-// Méthode pour publier ou masquer toutes les soutenances
+// Publier ou masquer les soutenances
 exports.publishDefenses = async (req, res) => {
   try {
     const { response } = req.params;
-
-    // Validation du paramètre response
-    if (response !== 'true' && response !== 'false') {
-      return res.status(400).json({
-        message: "La réponse doit être 'true' ou 'false'."
-      });
+    if (response !== "true" && response !== "false") {
+      return res.status(400).json({ message: "La réponse doit être 'true' ou 'false'." });
     }
 
-    // Convertir response en booléen
-    const isPublished = response === 'true';
-
-    const updatedDefenses = await Defense.updateMany(
-      {}, // Filtre vide pour cibler toutes les soutenances
-      { published: isPublished }, // Mise à jour du champ published
-      { new: true } // Option inutile ici mais utile pour spécifier le contexte
-    );
-
-    // Vérifier si des soutenances ont été modifiées
-    if (updatedDefenses.matchedCount === 0) {
-      return res.status(404).json({
-        message: "Aucune soutenance trouvée à mettre à jour."
-      });
-    }
-
-    res.status(200).json({
-      message: isPublished
-        ? "Toutes les soutenances ont été publiées avec succès."
-        : "Toutes les soutenances ont été masquées avec succès.",
-      updatedCount: updatedDefenses.modifiedCount // Nombre de soutenances modifiées
-    });
+    const result = await DefensePublisher.publishDefenses(response);
+    res.status(200).json(result);
   } catch (error) {
-    console.error("Erreur lors de la mise à jour des soutenances :", error);
-    res.status(500).json({
-      message: "Erreur interne du serveur.",
-      details: error.message
-    });
+    res.status(500).json({ error: error.message });
   }
 };
 
+// Fichier : controllers/defenseController.js
+const DefenseScheduler = require("../services/DefenseScheduler");
+const DefensePublisher = require("../services/DefensePublisher");
+const DefenseEmailService = require("../services/DefenseEmailService");
 
-//emailing
-exports.sendDefensesList = async (req, res) => {
-  
-  const recipients = ['fitourions@gmail.com', 'oumaimahrnii@gmail.com']; 
-
+// Planifier les soutenances
+exports.createDefenses = async (req, res) => {
   try {
-        // Récupérer la configuration d'envoi
-        let mailConfig = await Mail.findOne();
-    
-        // Si la configuration n'existe pas, la créer
-        if (!mailConfig) {
-          mailConfig = new Mail();
-          await mailConfig.save();
-        }
-    
-        const isModified = mailConfig.isModified;
-        const subject = isModified
-          ? "Liste des sujets PFA mise à jour"
-          : "Première liste des sujets PFE publiés";
-        const message = isModified
-          ? "La liste des sujets PFE a été modifiée. Consultez les nouveaux sujets ici."
-          : "Voici la liste des sujets PFE publiés.";
-      // Récupérer les Soutenances publiés
-      const publishedDefenses = await Defense.find({ published: true });
-      if (publishedDefenses.length === 0) {
-          return res.status(404).json({ message: 'Aucune soutenance publiée à envoyer.' });
-      }
+    const { dates, rooms, startTime, endTime } = req.body;
+    if (!dates || !rooms || !startTime || !endTime) {
+      return res.status(400).json({ message: "Données manquantes." });
+    }
 
-      // Envoyer un email aux destinataires
-      for (const recipient of recipients) {
-        console.log(`Envoi à : ${recipient}`);
-        await sendEmail({
-            to: recipient, 
-            subject, 
-            text: message, 
-            html: `<p>${message}</p>`, 
-        });
-      }
-    // Mettre à jour la configuration d'envoi
-    const now = new Date();
-    mailConfig.isModified = true; // À partir de la deuxième fois, la liste est marquée comme modifiée
-    mailConfig.lastSentDate = now;
-    await mailConfig.save();
-     
-
-      res.status(200).json({ message: 'Liste des soutenances PFA envoyée avec succès.', sentAt: now });
+    const defenses = await DefenseScheduler.scheduleDefenses(dates, rooms, startTime, endTime);
+    res.status(200).json({
+      message: "Soutenances créées avec succès.",
+      defenses,
+    });
   } catch (error) {
-      console.error('Erreur lors de l\'envoi de la liste des soutenances PFA :', error.message);
-      res.status(500).json({ error: 'Erreur interne du serveur', details: error.message });
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Publier ou masquer les soutenances
+exports.publishDefenses = async (req, res) => {
+  try {
+    const { response } = req.params;
+    if (response !== "true" && response !== "false") {
+      return res.status(400).json({ message: "La réponse doit être 'true' ou 'false'." });
+    }
+
+    const result = await DefensePublisher.publishDefenses(response);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Envoyer la liste des soutenances par e-mail
+exports.sendDefensesList = async (req, res) => {
+  try {
+    const recipients = ["fitourions@gmail.com", "oumaimahrnii@gmail.com"]; // Liste des destinataires
+    const result = await DefenseEmailService.sendDefensesList(recipients);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
 
