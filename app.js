@@ -8,10 +8,10 @@ require('dotenv').config();
 const setupSwagger = require('./swaggerDocs');
 // Import your Express app
 const app = express();
-const subjectadvancement = require('./routes/SubjectAdvancementRouter')
 const userRoutes = require('./routes/UserRouter');
 const competencesRoutes = require('./routes/CompetencesRoutes');
 const subjectRoutes = require('./routes/SubjectRoutes');
+const subjectadvancement = require('./routes/SubjectAdvancementRouter')
 const chapterRoutes = require('./routes/ChapterRoutes');
 const sectionRoutes = require('./routes/SectionRoutes');
 const periodRoutes = require('./routes/PeriodRouter');
@@ -24,7 +24,6 @@ const ChoisePFa = require('./routes/ChoisePFa');
 const evaluationRoutes = require('./routes/evaluationRoutes');
 const cors = require('cors');
 const { scheduleNotifications } = require('./services/scheduler');
-
 
 
 // Middleware to parse JSON request bodies
@@ -68,7 +67,6 @@ io.on('connection', (socket) => {
 });
 
 // Use the user routes
-app.use('/api/subjectadvancement', subjectadvancement);
 app.use('/api/users', userRoutes);
 app.use('/api/competences', competencesRoutes);
 app.use('/api/subjects', subjectRoutes);
@@ -82,6 +80,7 @@ app.use('/api/internship',internshipRoutes)
 app.use('/api/teachers',teacherRoutes)
 app.use('/api/choice',ChoisePFa)
 app.use('/api/evaluations', evaluationRoutes);
+app.use('/api/subjectadvancement', subjectadvancement);
 
 setupSwagger(app);
 

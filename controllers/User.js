@@ -1,28 +1,55 @@
-const express = require('express');
-const router = express.Router();
-const{
-    createUser,
-    getAllUsers,
-    getUserById,
-    updateUser,
-    deleteUser,
-    updateSubjectAdvancement,
-}= require('../controllers/User')
+// controllers/User.js
+const UserService = require('../services/UserService');
 
-// Route to create a new user
-router.post('/', createUser);
+// Créer un utilisateur
+exports.createUser = async (req, res) => {
+  try {
+    const user = await UserService.createUser(req.body);
+    res.status(201).json(user);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
 
-// Route to get all users
-router.get('/', getAllUsers);
+// Récupérer tous les utilisateurs
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await UserService.getAllUsers();
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
-// Route to get a specific user by ID
-router.get('/:id', getUserById);
+// Récupérer un utilisateur par ID
+exports.getUserById = async (req, res) => {
+  try {
+    const user = await UserService.getUserById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
-//update advancement for teacher 
-// Route to update a user by ID
-router.put('/:id', updateUser);
+// Mettre à jour un utilisateur
+exports.updateUser = async (req, res) => {
+  try {
+    const updatedUser = await UserService.updateUser(req.params.id, req.body);
+    res.json(updatedUser);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
 
-// Route to delete a user by ID
-router.delete('/:id', deleteUser);
+// Supprimer un utilisateur
+exports.deleteUser = async (req, res) => {
+  try {
+    await UserService.deleteUser(req.params.id);
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
-module.exports = router;
+

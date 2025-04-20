@@ -1,14 +1,14 @@
+// routes/SubjectAdvancementRouter.js
+
 const express = require('express');
 const router = express.Router();
-const{
-    
-    updateSubjectAdvancement,
-}= require('../controllers/SubjectAdvancement')
 
+// Correction du nom du fichier contrôleur
+const {
+  updateSubjectAdvancement,
+} = require('../controllers/SubjectAdvancement');
 
-//update advancement for teacher 
+// Route pour mettre à jour l’avancement d’un enseignant pour une matière
 router.put('/', updateSubjectAdvancement);
-
-
 
 module.exports = router;
