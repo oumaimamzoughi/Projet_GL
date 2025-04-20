@@ -19,7 +19,7 @@ exports.addInternship = async (req, res) => {
       return res.status(400).json({ message: "Title is required." });
     }
 
-    const userId = "6752c59a346b414452d45ba3"; // Example userId (replace as needed)
+    //const userId = "6752c59a346b414452d45ba3"; // Example userId (replace as needed)
     const userId = "6752c59a346b414452d45ba3";//req.user.id 
  
     const user = await User.findById(userId);
@@ -29,9 +29,7 @@ exports.addInternship = async (req, res) => {
     }
 
     const allowedTypes = [
-      "teacher_submission",
-      "internship_submission",
-      "pfa_choice_submission",
+      
       "internship_submission_2eme",
       "internship_submission_1ere",
     ];
