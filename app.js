@@ -8,6 +8,7 @@ require('dotenv').config();
 const setupSwagger = require('./swaggerDocs');
 // Import your Express app
 const app = express();
+const subjectadvancement = require('./routes/SubjectAdvancementRouter')
 const userRoutes = require('./routes/UserRouter');
 const competencesRoutes = require('./routes/CompetencesRoutes');
 const subjectRoutes = require('./routes/SubjectRoutes');
@@ -23,6 +24,7 @@ const ChoisePFa = require('./routes/ChoisePFa');
 const evaluationRoutes = require('./routes/evaluationRoutes');
 const cors = require('cors');
 const { scheduleNotifications } = require('./services/scheduler');
+
 
 
 // Middleware to parse JSON request bodies
@@ -66,6 +68,7 @@ io.on('connection', (socket) => {
 });
 
 // Use the user routes
+app.use('/api/subjectadvancement', subjectadvancement);
 app.use('/api/users', userRoutes);
 app.use('/api/competences', competencesRoutes);
 app.use('/api/subjects', subjectRoutes);
