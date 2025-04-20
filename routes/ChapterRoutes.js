@@ -1,25 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const {
-    createChapter,
-    getAllChapters,
-    getChapterById,
-    updateChapter,
-    deleteChapter,
-} = require("../controllers/Chapter")
-// Create a new chapter
-router.post('/', createChapter);
+const ChapterController = require('../controllers/Chapter');
 
-// Get all chapters
-router.get('/', getAllChapters);
-
-// Get a specific chapter by ID
-router.get('/:id', getChapterById);
-
-// Update a chapter by ID
-router.put('/:id', updateChapter);
-
-// Delete a chapter by ID
-router.delete('/:id', deleteChapter);
+router.post('/', ChapterController.createChapter);
+router.get('/:id', ChapterController.getChapter);
+router.put('/:id', ChapterController.updateChapter);
+router.delete('/:id', ChapterController.deleteChapter);
+router.patch('/:id/status', ChapterController.updateStatus);
 
 module.exports = router;

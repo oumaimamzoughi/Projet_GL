@@ -1,61 +1,53 @@
-const Chapter = require('../models/Chapter.model');
+const chapterService = require('../services/ChapterService');
+const ChapterUpdateStrategy = require('../strategies/ChapterUpdateStrategy');
 
-// Create a new chapter
-exports.createChapter = async (req, res) => {
-  try {
-    const newChapter = new Chapter(req.body);
-    await newChapter.save();
-    res.status(201).json(newChapter);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};
-
-// Get all chapters
-exports.getAllChapters = async (req, res) => {
-  try {
-    const chapters = await Chapter.find().populate("sections");
-    res.status(200).json(chapters);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-// Get a specific chapter by ID
-exports.getChapterById = async (req, res) => {
-  try {
-    const chapter = await Chapter.findById(req.params.id).populate("sections");
-    if (!chapter) {
-      return res.status(404).json({ message: 'Chapter not found' });
+module.exports = {
+  async createChapter(req, res) {
+    try {
+      const chapter = await chapterService.createChapter(req.body);
+      res.status(201).json(chapter);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
     }
-    res.status(200).json(chapter);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+  },
 
-// Update a chapter by ID
-exports.updateChapter = async (req, res) => {
-  try {
-    const chapter = await Chapter.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!chapter) {
-      return res.status(404).json({ message: 'Chapter not found' });
+  async getChapter(req, res) {
+    try {
+      const chapter = await chapterService.getChapterById(req.params.id);
+      res.status(200).json(chapter);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
     }
-    res.status(200).json(chapter);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};
+  },
 
-// Delete a chapter by ID
-exports.deleteChapter = async (req, res) => {
-  try {
-    const chapter = await Chapter.findByIdAndDelete(req.params.id);
-    if (!chapter) {
-      return res.status(404).json({ message: 'Chapter not found' });
+  async updateChapter(req, res) {
+    try {
+      // Injecter la stratégie de mise à jour
+      chapterService.setUpdateStrategy(new ChapterUpdateStrategy());
+
+      // Mettre à jour le chapitre en utilisant la stratégie
+      const updatedChapter = await chapterService.updateChapter(req.params.id, req.body);
+      res.status(200).json(updatedChapter);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
     }
-    res.status(204).send();
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  },
+
+  async deleteChapter(req, res) {
+    try {
+      await chapterService.deleteChapter(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  },
+
+  async updateStatus(req, res) {
+    try {
+      const chapter = await chapterService.updateChapterStatus(req.params.id, req.body.status);
+      res.status(200).json(chapter);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
   }
 };
