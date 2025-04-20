@@ -18,8 +18,7 @@ router.get('/', getAllUsers);
 // Route to get a specific user by ID
 router.get('/:id', getUserById);
 
-//update advancement for teacher 
-router.put('/update-advancement', updateSubjectAdvancement);
+
 
 // Route to update a user by ID
 router.put('/:id', updateUser);
