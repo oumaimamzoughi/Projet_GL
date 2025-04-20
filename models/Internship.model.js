@@ -10,6 +10,7 @@ const internshipSchema = new mongoose.Schema({
   type: {
     type: String,
     required: true,
+    enum: ["internship_submission_1ere", "internship_submission_2eme"], // Valeurs autorisées
   },
   documents: {
     type: [String], // Array of documents (e.g., URLs, file paths)
@@ -67,7 +68,28 @@ const internshipSchema = new mongoose.Schema({
 }, {
   timestamps: true, // Automatically add `createdAt` and `updatedAt` timestamps
 });
+internshipSchema.pre('save', function (next) {
+  if (this.planningStatus === 'published' && !this.schedule?.date) {
+    return next(new Error("Une date doit être définie si le planning est publié."));
+  }
+  next();
+});
 
+// OCL 2: Stage validé => raison obligatoire
+internshipSchema.pre('save', function (next) {
+  if (this.validated && (!this.validationReason || this.validationReason.trim() === '')) {
+    return next(new Error("Un stage validé doit contenir une raison de validation."));
+  }
+  next();
+});
+
+// OCL 3: Type = 'soutenance' => lien Google Meet requis (optionnel si tu veux le garder)
+internshipSchema.pre('save', function (next) {
+  if (this.type === 'soutenance' && !this.googleMeetLink) {
+    return next(new Error("Le lien Google Meet est requis pour une soutenance."));
+  }
+  next();
+});
 // Create the Internship model
 const Internship = mongoose.model('Internship', internshipSchema);
 
