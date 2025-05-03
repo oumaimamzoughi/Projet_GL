@@ -1,62 +1,99 @@
 const mongoose = require("mongoose");
 
-// Define the PFA schema
-const pfaSchema = new mongoose.Schema({
-  title: {
-    type: String, // Title of the PFA
-    required: true,
-    trim: true,
+// Schéma de base pour PFA
+const pfaSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    description: {
+      type: String,
+      required: true,
+    },
+    technologies: {
+      type: String,
+      required: true,
+    },
+    status: {
+      type: String,
+      default: "ongoing",
+    },
+    state: {
+      type: String,
+      default: "non affecté",
+    },
+    teacher: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    student: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+      ref: "User",
+    },
+    isSent: {
+      type: Boolean,
+      default: false,
+    },
+    lastSentDate: {
+      type: Date,
+    },
+    force: {
+      type: Boolean,
+      default: false,
+    },
   },
-  description: {
-    type: String, // Description of the PFA
-    required: true,
-  },
-  technologies: {
-    type: String, // Technologies used
-    required: true,
-  },
-  pair_work: {
-    type: Boolean, // Indicates if pair work is involved
-    default: false,
-  },
-  partner_id: {
-    type: mongoose.Schema.Types.ObjectId, // ID of the partner (if pair work)
-    default: null, // Default is null when no partner
-    ref: "User", // Reference to the User model (partner)
-  },
-  status: {
-    type: String, // Status of the PFA
-    default: "ongoing", // Default status
-  },
-  state: {
-    type: String, // Current state of the PFA
-    default: "non affecté", // Default state
-  },
+  { discriminatorKey: "type" } // Clé pour différencier les sous-types
+);
 
-  teacher: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User", // Teacher name or ID
-    required: true,
-  },
-  student: {
-    type: mongoose.Schema.Types.ObjectId, // ID of the partner (if pair work)
-    default: null, // Default is null when no partner
-    ref: "User", // Reference to the User model (partner)
-  },
-
-  isSent: {
-    type: Boolean,
-    default: false, // Indique si ce PFA a déjà été envoyé
-  },
-  lastSentDate: {
-    type: Date, // Date du dernier envoi de ce PFA
-  },
-  force: {
-    type: Boolean, // Indicates if pair work is involved
-  default: false,
-  }
-});
-// Create the PFA model
+// Modèle de base PFA
 const PFA = mongoose.model("PFA", pfaSchema);
 
-module.exports = PFA;
+// Schéma pour PfaMonome (individuel)
+const pfaMonomeSchema = new mongoose.Schema({
+  pair_work: {
+    type: Boolean,
+    default: false, // Toujours false pour PfaMonome
+  },
+  partner_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    default: null,
+    ref: "User",
+    validate: {
+      validator: function (value) {
+        return !value; // partner_id doit être null pour PfaMonome
+      },
+      message: "PfaMonome cannot have a partner_id.",
+    },
+  },
+});
+
+// Schéma pour PfaBinome (binôme)
+const pfaBinomeSchema = new mongoose.Schema({
+  pair_work: {
+    type: Boolean,
+    default: true, // Toujours true pour PfaBinome
+  },
+  partner_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true, // Obligatoire pour PfaBinome
+    ref: "User",
+    validate: {
+      validator: async function (value) {
+        const User = mongoose.model("User");
+        const user = await User.findById(value);
+        return user && user.role === "student";
+      },
+      message: "partner_id must reference an existing student.",
+    },
+  },
+});
+
+// Définir les sous-modèles avec discriminators
+const PfaMonome = PFA.discriminator("PfaMonome", pfaMonomeSchema);
+const PfaBinome = PFA.discriminator("PfaBinome", pfaBinomeSchema);
+
+module.exports = { PFA, PfaMonome, PfaBinome };

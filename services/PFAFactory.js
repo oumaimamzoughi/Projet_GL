@@ -1,34 +1,38 @@
-const PFA = require("../models/PFA.mode");
+const { PfaBinome, PfaMonome } = require("../models/PFA.model");
 
 class PFAFactory {
-  // Méthode pour créer un PFA standard
   createPFA(data) {
-    const { title, description, technologies, pair_work, teacher } = data;
-    return new PFA({
-      title,
-      description,
-      technologies,
-      pair_work,
-      teacher,
-      status: "ongoing", // Statut initial
-      state: "non affecté", // État initial
-    });
+    throw new Error("This method must be overridden by subclasses!");
   }
+}
 
-  // Méthode pour créer un PFA avec binôme
-  createPFAPairWork(data) {
-    const { title, description, technologies, teacher, partner_id } = data;
-    return new PFA({
+class BinomePFAFactory extends PFAFactory {
+  createPFA(data) {
+    const { title, description, technologies, partner_id, teacher } = data;
+    return new PfaBinome({
       title,
       description,
       technologies,
-      pair_work: true, // Forcer le binôme
+      partner_id, // Obligatoire pour PfaBinome
       teacher,
-      partner_id, // Ajouter l'ID du partenaire
       status: "ongoing",
       state: "non affecté",
     });
   }
 }
 
-module.exports = new PFAFactory(); // Exporter une instance unique de la factory
+class MonomePFAFactory extends PFAFactory {
+  createPFA(data) {
+    const { title, description, technologies, teacher } = data;
+    return new PfaMonome({
+      title,
+      description,
+      technologies,
+      teacher,
+      status: "ongoing",
+      state: "non affecté",
+    });
+  }
+}
+
+module.exports = { PFAFactory, BinomePFAFactory, MonomePFAFactory };

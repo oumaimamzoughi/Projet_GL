@@ -5,6 +5,7 @@ const User = require("../models/User.model")
 const { sendEmail } = require("../services/emailService");
 const Mail = require("../models/email.model");
 const PFAFactory = require("../services/PFAFactory");
+const { BinomePFAFactory, MonomePFAFactory } = require("../services/PFAFactory");
 const PFAAssigner = require("../services/PFAAssigner");
 
 // Create a new PFA
@@ -47,57 +48,67 @@ const PFAAssigner = require("../services/PFAAssigner");
 //     res.status(500).json({ error: error.message });
 //   }
 // };
-// Create a new PFA
 exports.createPFA = async (req, res) => {
   try {
     // Vérifier si une période de type 'teacher_submission' est ouverte
     const currentDate = new Date();
     const openPeriod = await Period.findOne({
       type: "teacher_submission",
-      end_date: { $gt: currentDate }, // end_date > currentDate
+      end_date: { $gt: currentDate },
     });
+
     if (!openPeriod) {
-      return res
-        .status(400)
-        .json({ message: "No open period for teacher submissions." });
+      return res.status(400).json({ message: "No open period for teacher submissions." });
     }
 
-    // Utiliser la factory pour créer le PFA
-    const newPFA = PFAFactory.createPFA({
-      ...req.body,
-      teacher: req.auth.userId, // ID de l'enseignant connecté
+    const { title, description, technologies, pair_work, partner_id } = req.body;
+
+    // Choisir la factory en fonction de pair_work
+    const factory = pair_work ? new BinomePFAFactory() : new MonomePFAFactory();
+
+    // Créer le PFA avec la factory
+    const newPFA = factory.createPFA({
+      title,
+      description,
+      technologies,
+      partner_id: pair_work ? partner_id : undefined, // partner_id uniquement pour PfaBinome
+      teacher: req.auth.userId,
     });
 
-    // Sauvegarder le PFA dans la base de données
+    // Sauvegarder le PFA
     await newPFA.save();
     res.status(201).json(newPFA);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-// Create a PFA with pair work
-exports.createPFAPairWork = async (req, res) => {
+
+exports.createPFAInPairWork = async (req, res) => {
   try {
     // Vérifier si une période de type 'teacher_submission' est ouverte
     const currentDate = new Date();
     const openPeriod = await Period.findOne({
       type: "teacher_submission",
-      end_date: { $gt: currentDate }, // end_date > currentDate
+      end_date: { $gt: currentDate },
     });
+
     if (!openPeriod) {
-      return res
-        .status(400)
-        .json({ message: "No open period for teacher submissions." });
+      return res.status(400).json({ message: "No open period for teacher submissions." });
     }
 
-    // Utiliser la factory pour créer un PFA avec binôme
-    const newPFA = PFAFactory.createPFAPairWork({
-      ...req.body,
-      teacher: req.auth.userId, // ID de l'enseignant connecté
-      partner_id: req.body.partnerId, // ID du binôme
+    const { title, description, technologies, partner_id } = req.body;
+
+    // Utiliser directement BinomePFAFactory pour un PFA en binôme
+    const factory = new BinomePFAFactory();
+
+    const newPFA = factory.createPFA({
+      title,
+      description,
+      technologies,
+      partner_id, // Obligatoire pour PfaBinome
+      teacher: req.auth.userId,
     });
 
-    // Sauvegarder le PFA dans la base de données
     await newPFA.save();
     res.status(201).json(newPFA);
   } catch (error) {
