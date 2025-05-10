@@ -7,10 +7,6 @@ class ChapterService {
     this.updater = new UpdaterContext(new ChapterUpdateStrategy());
   }
 
-  setUpdateStrategy(strategy) {
-    this.updater.setStrategy(strategy);
-  }
-
   async createChapter(data) {
     return new Chapter(data).save();
   }

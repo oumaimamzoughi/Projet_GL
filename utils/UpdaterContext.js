@@ -3,10 +3,6 @@ class UpdaterContext {
     this.strategy = strategy;
   }
 
-  setStrategy(strategy) {
-    this.strategy = strategy;
-  }
-
   update(entity, newData) {
     if (!this.strategy) {
       throw new Error('No strategy set');

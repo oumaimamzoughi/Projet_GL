@@ -7,10 +7,6 @@ class CompetenceService {
     this.updater = new UpdaterContext(new CompetenceUpdateStrategy());
   }
 
-  setUpdateStrategy(strategy) {
-    this.updater.setStrategy(strategy);
-  }
-
   async createCompetence(competenceData) {
     const competence = new Competence(competenceData);
     return competence.save();

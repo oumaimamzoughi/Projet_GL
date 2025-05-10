@@ -7,10 +7,6 @@ class SectionService {
     this.updater = new UpdaterContext(new SectionUpdateStrategy());
   }
 
-  setUpdateStrategy(strategy) {
-    this.updater.setStrategy(strategy);
-  }
-
   async createSection(data) {
     return new Section(data).save();
   }
