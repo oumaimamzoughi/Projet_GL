@@ -1,19 +1,18 @@
-// strategies/approval/ApprovalContext.js
 class ApprovalContext {
-    constructor(strategy) {
-      this.strategy = strategy;
-    }
-  
-    setStrategy(strategy) {
-      this.strategy = strategy;
-    }
-  
-    async execute(modification, subject) {
-      if (!this.strategy) {
-        throw new Error('No strategy set');
-      }
-      return this.strategy.execute(modification, subject);
-    }
+  constructor(strategy) {
+    this.strategy = strategy;
   }
-  
-  module.exports = ApprovalContext;
+
+  setStrategy(strategy) {
+    this.strategy = strategy;
+  }
+
+  async execute(modification, subject) {
+    if (!this.strategy) {
+      throw new Error('No strategy set');
+    }
+    return this.strategy.execute(modification, subject);
+  }
+}
+
+module.exports = ApprovalContext;

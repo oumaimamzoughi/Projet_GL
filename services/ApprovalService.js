@@ -1,10 +1,15 @@
 const SubjectModification = require('../models/SubjectModification.model');
 const Subject = require('../models/Subject.model');
 const DefaultApprovalStrategy = require('../strategies/approval/DefaultApprovalStrategy');
+const ApprovalContext = require('../utils/ApprovalContext');
 
 class ApprovalService {
-  constructor(strategy = new DefaultApprovalStrategy()) {
-    this.strategy = strategy;
+  constructor() {
+    this.approvalContext = new ApprovalContext(new DefaultApprovalStrategy());
+  }
+
+  setApprovalStrategy(strategy) {
+    this.approvalContext.setStrategy(strategy);
   }
 
   async approve(modificationId) {
@@ -14,8 +19,8 @@ class ApprovalService {
     const subject = await Subject.findById(modification.id_Subject);
     if (!subject) throw new Error('Subject not found');
 
-    return this.strategy.execute(modification, subject);
+    return this.approvalContext.execute(modification, subject);
   }
 }
 
-module.exports = ApprovalService;
+module.exports = new ApprovalService();

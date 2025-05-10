@@ -1,6 +1,6 @@
 // strategies/approval/ApprovalStrategy.js
 class ApprovalStrategy {
-    async approve(modification, subject) {
+    async execute(modification, subject) {
       throw new Error('approve() must be implemented by subclass');
     }
   }
