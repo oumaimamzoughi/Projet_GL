@@ -9,14 +9,7 @@ class InternshipController {
       const documents = req.files?.map((file) => file.path);
       const userId = "6752c59a346b414452d45ba3"; // Replace with actual user ID from auth
 
-      const allowedTypes = [
-        "internship_submission_2eme",
-        "internship_submission_1ere",
-      ];
-
-      if (!allowedTypes.includes(type)) {
-        return res.status(400).json({ message: "Invalid internship type." });
-      }
+      
 
       const newInternship = await internshipService.addInternship(
         type,

@@ -7,6 +7,14 @@ class InternshipService {
     const user = await User.findById(userId);
     if (!user) throw new Error("User not found.");
 
+    const allowedTypes = [
+            "internship_submission_2eme",
+            "internship_submission_1ere",
+          ];
+    
+    if (!allowedTypes.includes(type)) {
+      return res.status(400).json({ message: "Invalid internship type." });
+    }
     const newInternship = new Internship({
       title,
       documents,
