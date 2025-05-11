@@ -1,38 +1,61 @@
-// Classe de base (Component)
+// Classe de base (Component) coriger 
 class InternshipValidator {
-    validate(internship) {
-        return { isValid: true, errors: [] };
+    validate(data) {
+        throw new Error("Method 'validate()' must be implemented.");
     }
 }
 
-// BasicValidator (ConcreteComponent)
+
+// BasicValidator (ConcreteComponent) --> implementation de base de la methode validate 
+//pour BasicValidator 
 class BasicValidator extends InternshipValidator {
-    validate(internship) {
-        return { isValid: true, errors: [] };
+    validate(data) {
+        const errors = [];
+        
+        // Validation structurelle minimale
+        if (!data || typeof data !== 'object') {
+            return { isValid: false, errors: ["Format de données invalide"] };
+        }
+
+        if (typeof data.title !== 'string') {
+            errors.push("Le titre doit être une chaîne");
+        }
+
+        if (!Array.isArray(data.documents)) {
+            errors.push("Les documents doivent être un tableau");
+        }
+
+        return { isValid: errors.length === 0, errors };
     }
 }
 
 // ValidationDecorator (Decorator)
 class ValidationDecorator extends InternshipValidator {
-    constructor(validator) {
+    constructor(wrappedValidator) {  // c'est le validateur enveloppé (celui qu'on décore) 
         super();
-        this.validator = validator;
+        this.wrappedValidator = wrappedValidator;
     }
 
-    validate(internship) {
-        return this.validator.validate(internship);
+    validate(data) {
+        return this.wrappedValidator.validate(data);
     }
 }
 
 // TitleValidationDecorator (ConcreteDecorator A)
 class TitleValidationDecorator extends ValidationDecorator {
-    validate(internship) {
-        const result = super.validate(internship);
+    validate(data) {
+        // 1. Appel au validateur ENVELOPPÉ
+        const result = super.validate(data);
 
-        if (!internship.title || internship.title.trim() === "") {
+         // 2. Ajout de nouvelles règles
+        if (!data.title?.trim()) {
             result.isValid = false;
-            result.errors.push("Title is required.");
+            result.errors.push("Titre requis");
+        } else if (data.title.length < 5) {
+            result.isValid = false;
+            result.errors.push("Titre trop court (5 caractères minimum)");
         }
+
 
         return result;
     }
@@ -40,13 +63,13 @@ class TitleValidationDecorator extends ValidationDecorator {
 
 // DocumentValidationDecorator (ConcreteDecorator B)
 class DocumentValidationDecorator extends ValidationDecorator {
-    validate(internship) {
-        const result = super.validate(internship);
+    validate(data) {
+        const result = super.validate(data);
 
-        // Vérifier si les documents sont présents et que la longueur n'est pas égale à 0
-        if (!internship.documents || internship.documents.length === 0) {
+        // Vérifier que la longueur n'est pas égale à 0
+        if (data.documents.length === 0) {
             result.isValid = false;
-            result.errors.push("Documents are missing.");
+            result.errors.push("Au moins un document est requis.");
         }
 
         return result;
